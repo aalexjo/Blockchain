@@ -1,7 +1,7 @@
 all: da_proc
 
-da_proc: da_proc.c
-	gcc -Wall -o da_proc da_proc.c
+da_proc: da_proc.cpp
+	g++ -Wall -o da_proc da_proc.cpp
 
 clean:
 	rm da_proc

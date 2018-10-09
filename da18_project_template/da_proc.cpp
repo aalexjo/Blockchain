@@ -6,6 +6,7 @@
 static int wait_for_start = 1;
 
 static void start(int signum) {
+	printf("Starting.\n");
 	wait_for_start = 0;
 }
 
@@ -31,12 +32,15 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 
-
+	char *addr = "127.0.0.1";
+	char *port
 	//parse arguments, including membership
 	//initialize application
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
-
+	//member file
+	//buffer
+	//
 
 	//wait until start signal
 	while(wait_for_start) {
