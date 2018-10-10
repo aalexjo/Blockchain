@@ -2,12 +2,21 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
+#include "UDP.hpp"
 
-static int wait_for_start = 1;
+static int wait_for_start = 0;
 
 static void start(int signum) {
 	printf("Starting.\n");
 	wait_for_start = 0;
+}
+
+void UDPTestCallback(const char * ip, char * data, int datalength){
+
+  // Assuming an ascii string here - a binary blob (including '0's) will
+  // be ugly/truncated.
+  printf("Received UDP message from %s: '%s'\n",ip,data);
+
 }
 
 static void stop(int signum) {
@@ -32,15 +41,16 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 
-	char *addr = "127.0.0.1";
-	char *port
+	char const *addr = "127.0.0.1";
+	int port = 1729;
 	//parse arguments, including membership
 	//initialize application
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
 	//member file
 	//buffer
-	//
+	UDP udp(addr, port, UDPTestCallback);
+	udp.startReceiving();
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -57,6 +67,7 @@ int main(int argc, char** argv) {
 
 	//wait until stopped
 	while(1) {
+		udp.broadcast("hallo all",10 );
 		struct timespec sleep_time;
 		sleep_time.tv_sec = 1;
 		sleep_time.tv_nsec = 0;
