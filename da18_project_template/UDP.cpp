@@ -1,4 +1,3 @@
-#include "UDP.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <vector>
 
 #include <assert.h>
 #include <pthread.h>
@@ -19,6 +19,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include "UDP.hpp"
 
 #define BUFLEN 512
 

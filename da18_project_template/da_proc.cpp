@@ -2,21 +2,13 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
-#include "UDP.hpp"
+#include "perfectLink.hpp"
 
 static int wait_for_start = 0;
 
 static void start(int signum) {
 	printf("Starting.\n");
 	wait_for_start = 0;
-}
-
-void UDPTestCallback(const char * ip, char * data, int datalength){
-
-  // Assuming an ascii string here - a binary blob (including '0's) will
-  // be ugly/truncated.
-  printf("Received UDP message from %s: '%s'\n",ip,data);
-
 }
 
 static void stop(int signum) {
@@ -49,8 +41,8 @@ int main(int argc, char** argv) {
 	printf("Initializing.\n");
 	//member file
 	//buffer
-	UDP udp(addr, port, UDPTestCallback);
-	udp.startReceiving();
+	perfectLink perfectLink(addr, port);
+	perfectLink.startReceiving();
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -66,11 +58,9 @@ int main(int argc, char** argv) {
 
 
 	//wait until stopped
-	while(1) {
-		udp.broadcast("hallo all",10 );
-		struct timespec sleep_time;
-		sleep_time.tv_sec = 1;
-		sleep_time.tv_nsec = 0;
-		nanosleep(&sleep_time, NULL);
-	}
+	perfectLink.broadcast("hallo all",10 );
+	struct timespec sleep_time;
+	sleep_time.tv_sec = 1;
+	sleep_time.tv_nsec = 0;
+	nanosleep(&sleep_time, NULL);
 }
