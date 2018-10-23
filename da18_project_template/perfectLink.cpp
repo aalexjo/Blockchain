@@ -1,37 +1,39 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vector>
-#include <string>
-#include "UDP.hpp"
 #include "perfectLink.hpp"
 
-
-perfectLink::perfectLink(char const *addr, int port, perfectLinkMessageCallback callback) {
+perfectLink::perfectLink(const char* addr, int port, perfectLinkMessageCallback callback): udp(addr, port, callback) {
   messagesSent = 0;
-  Protected UDP udp(addr, port, perfectLinkcallback);
-}
-
-void perfectLink::Broadcast(char const *data, int datalength){
-  //TODO: her kan man implementere stubborn link sending ved å spawne en thread
-  //som sender meldingen en gang per X antall sekunder
-  perfectLinkThreadList threadListItem = {udp, data, datalength}
-  pthread_t broadcaster;
-  int e = pthread_create(&broadcaster, NULL, thr_broadcaster, &(this->threadListItem);
-  if(e==-1)  error("perfectLink_broadcast: pthread_create");
+  // this->udp = udp(addr, port, callback);
+  // UDP udp(addr, port, callback);
 }
 
 void *thr_broadcaster(void *arg) {
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
   char const *data = threadListItem->data;
   int datalength = threadListItem->datalength;
-  threadListItem->udp.broadcast(data, datalength);
-
+  for (int i = 0; i < 5; i++) {
+    printf("Broadcast number %d\n", i);
+    threadListItem->udp.broadcast(data, datalength);
+  }
   // Mulig threaden må ha en teller for å vite hvor lenge den skal skal sende/
   // hvor mange ganger den skal sende
+  return 0;
 }
 
-void perfectLink::Receive(){
+void perfectLink::broadcast(char const *data, int datalength){
+  //TODO: her kan man implementere stubborn link sending ved å spawne en thread
+  //som sender meldingen en gang per X antall sekunder
+  perfectLinkThreadList threadListItem = {this->udp, data, datalength};
+  pthread_t broadcaster;
+  int e = pthread_create(&broadcaster, NULL, thr_broadcaster, &(threadListItem));
+  if(e==-1) {
+     error("perfectLink_broadcast: pthread_create");
+  }
+}
+
+void perfectLink::startReceiving(){
   //TODO: have to make some deciens here about who should invoce UDP.startReceiving
   //somewhere the callbackfunction has to be implemented and handle receiving, should be here
 
@@ -44,9 +46,8 @@ void perfectLink::Receive(){
 
 
   // }
-  upd.startReceiving();
-}
+  this->udp.startReceiving();
 
-void perfectLinkcallback(const char * ip, char * data, int datalength) {
-  printf("Received UDP message from %s: '%s'\n",ip,data);
+  // -------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!----------------------
+  // Mulig vi må joine p_threads for at de ska kunne kjøre skikkelig
 }

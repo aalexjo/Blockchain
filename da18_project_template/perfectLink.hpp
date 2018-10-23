@@ -1,3 +1,10 @@
+#include "UDP.hpp"
+#include <vector>
+#include <string>
+
+typedef void (*perfectLinkMessageCallback)(const char *ip, char *data, int datalength);
+
+void error(char const *e);
 
 typedef struct{
   UDP udp;
@@ -7,11 +14,12 @@ typedef struct{
 
 class perfectLink{
 public:
-  perfectLink(char const *addr, int port, perfectLinkMessageCallback callback);
-  void broadcast(char const *data, int datalength);
+  perfectLink(const char* addr, int port, perfectLinkMessageCallback callback);
+  void broadcast(const char* data, int datalength);
   void startReceiving();
 private:
-  std::vector<string> delivered;
+  std::vector<std::string> delivered;
   int messagesSent;
-  string processID;
+  std::string processID;
+  UDP udp;
 };

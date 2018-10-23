@@ -26,6 +26,12 @@ static void stop(int signum) {
 	exit(0);
 }
 
+void perfectLinkTestCallback(const char * ip, char * data, int datalength) {
+	// Assuming an ascii string here - a binary blob (including '0's) will
+  // be ugly/truncated.
+	printf("Received perfectLink message from %s: '%s'\n",ip,data);
+}
+
 int main(int argc, char** argv) {
 
 	//set signal handlers
@@ -41,7 +47,7 @@ int main(int argc, char** argv) {
 	printf("Initializing.\n");
 	//member file
 	//buffer
-	perfectLink perfectLink(addr, port);
+	perfectLink perfectLink(addr, port, perfectLinkTestCallback);
 	perfectLink.startReceiving();
 
 	//wait until start signal
