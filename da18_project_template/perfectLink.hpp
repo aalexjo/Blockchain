@@ -1,6 +1,7 @@
 #include "UDP.hpp"
 #include <vector>
 #include <string>
+#include <set>
 
 typedef void (*perfectLinkMessageCallback)(const char *ip, char *data, int datalength);
 
@@ -18,8 +19,10 @@ public:
   void broadcast(const char* data, int datalength);
   void startReceiving();
 private:
-  std::vector<std::string> delivered;
+  //std::vector<std::string> delivered;
+  std::set<char> delivered;
   int messagesSent;
   std::string processID;
   UDP udp;
+  UDPMessageTestCallback udpcallback;
 };

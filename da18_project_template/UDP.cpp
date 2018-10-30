@@ -50,9 +50,12 @@ void UDP::broadcast(char const * data, int dataLength){
     fprintf(stderr, "inet_aton() failed\n");
     exit(1);
   }
-  int e = sendto(s, data, dataLength, 0, (struct sockaddr *) &si_other, slen);//sending data
-  printf("Message broadcasted \n");
-  if(e==-1)  error("udp_broadcast: sendto()");
+  for (int i = 0; i < 10; i++) {
+    printf("Broadcast number %d\n", i);
+    int e = sendto(s, data, dataLength, 0, (struct sockaddr *) &si_other, slen);//sending data
+    printf("Message broadcasted \n");
+    if(e==-1)  error("udp_broadcast: sendto()");
+  }
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
 }
 

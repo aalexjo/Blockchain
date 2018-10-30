@@ -29,7 +29,9 @@ static void stop(int signum) {
 void perfectLinkTestCallback(const char * ip, char * data, int datalength) {
 	// Assuming an ascii string here - a binary blob (including '0's) will
   // be ugly/truncated.
-	printf("Received perfectLink message from %s: '%s'\n",ip,data);
+	// printf("Received perfectLink message from %s: '%s'\n", ip, data);
+	printf("Perfect link recived");
+	// return std::make_tuple()
 }
 
 int main(int argc, char** argv) {
@@ -39,16 +41,16 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 
-	char const *addr = "127.0.0.1";
-	int port = 1729;
+	char const *addrR = "127.0.0.1";
+	int portR = 1729;
 	//parse arguments, including membership
 	//initialize application
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
 	//member file
 	//buffer
-	perfectLink perfectLink(addr, port, perfectLinkTestCallback);
-	perfectLink.startReceiving();
+	perfectLink perfectLinkReceive(addrR, portR, perfectLinkTestCallback);
+	perfectLinkReceive.startReceiving();
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -62,9 +64,13 @@ int main(int argc, char** argv) {
 	//broadcast messages
 	printf("Broadcasting messages.\n");
 
+	char const *addrB = "127.0.0.1";
+	int portB = 1729;
+
+	perfectLink perfectLinkBroadcast(addrB, portB, perfectLinkTestCallback);
 
 	//wait until stopped
-	perfectLink.broadcast("hallo all",10 );
+	perfectLinkBroadcast.broadcast("hallo all", 10);
 	struct timespec sleep_time;
 	sleep_time.tv_sec = 1;
 	sleep_time.tv_nsec = 0;

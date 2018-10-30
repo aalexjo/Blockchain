@@ -3,20 +3,28 @@
 #include <stdlib.h>
 #include "perfectLink.hpp"
 
-perfectLink::perfectLink(const char* addr, int port, perfectLinkMessageCallback callback): udp(addr, port, callback) {
+perfectLink::perfectLink(const char* addr, int port, perfectLinkMessageCallback callback): udp(addr, port, udpcallback) {
   messagesSent = 0;
   // this->udp = udp(addr, port, callback);
   // UDP udp(addr, port, callback);
+}
+
+void UDPMessageTestCallback(const char * ip, char * data, int datalength) {
+	// Assuming an ascii string here - a binary blob (including '0's) will
+  // be ugly/truncated.
+	printf("Received UDP message from %s: '%s'\n", ip, data);
+  delivered.insert(data);
+  print(delivered.size());
 }
 
 void *thr_broadcaster(void *arg) {
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
   char const *data = threadListItem->data;
   int datalength = threadListItem->datalength;
-  for (int i = 0; i < 5; i++) {
-    printf("Broadcast number %d\n", i);
-    threadListItem->udp.broadcast(data, datalength);
-  }
+  //for (int i = 0; i < 5; i++) {
+  //  printf("Broadcast number %d\n", i);
+  threadListItem->udp.broadcast(data, datalength);
+  //}
   // Mulig threaden må ha en teller for å vite hvor lenge den skal skal sende/
   // hvor mange ganger den skal sende
   return 0;
@@ -40,13 +48,14 @@ void perfectLink::startReceiving(){
   //TODO: find a way to trigger a deliver event to send it up the callstack. (polling or interrupts)
   //easiest mught just be to have a thread that is waiting for new messages to arrive
 
-  // if (std::find(delivered.begin(), delivered.end(), "here should be message be, ass a string") != v.end()) {
-    // Could not find the header of received message in our delivered vector,
-    // Add it to delivered and deliver it to our processes
-
-
-  // }
   this->udp.startReceiving();
+
+  //if (std::find(delivered.begin(), delivered.end(), "here should be message be, as a string") != v.end()) {
+  //  Could not find the header of received message in our delivered vector,
+  //  Add it to delivered and deliver it to our processes
+
+
+  //}
 
   // -------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!----------------------
   // Mulig vi må joine p_threads for at de ska kunne kjøre skikkelig
