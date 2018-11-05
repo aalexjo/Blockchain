@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 
-typedef void(*RBMessageCallback)(const char *ip, char *data, int datalength);
+//typedef void(*RBMessageCallback)(const char *ip, char *data, int datalength);
 
 
 typedef struct {
@@ -15,21 +15,19 @@ class reliableBroadcast{
 public:
   reliableBroadcast(int n);
 
-  void broadcast(string data);
+  void broadcast(struct msg_s* msg);
   void receiver();
   bool canDeliver();
 
-
 private:
-	void pp2pCallback(const char * ip, char * data, int datalength);
+	void pp2pCallback(struct msg_s* msg);//const char * ip, char * data, int datalength);
 	int n; //num of Procsess
+  int pid;
 	perfectLink link;
-	unsigned int m;
-	std::vector<std::string> delivery;
-	std::map<char,bool> delivered;
-	std::vector<bool> forward;
-	std::vector<bool> correct;
-	std::map<char, int> ack;
+	unsigned int seq_nr;
+	std::vector<msg_s> delivered;
+	std::vector<vector<int>> forward;
+	std::map<int, vector<int>> ack;
 
 
 }
