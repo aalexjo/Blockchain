@@ -33,7 +33,7 @@ UDP::UDP(const char* ipaddr, int port, UDPMessageCallback callback): ipaddr(ipad
 
 }
 
-void UDP::broadcast(char const * data, int dataLength){
+void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   struct sockaddr_in si_other;
   int s, slen=sizeof(si_other);
 
@@ -50,12 +50,8 @@ void UDP::broadcast(char const * data, int dataLength){
     fprintf(stderr, "inet_aton() failed\n");
     exit(1);
   }
-  for (int i = 0; i < 10; i++) {
-    printf("Broadcast number %d\n", i);
-    int e = sendto(s, data, dataLength, 0, (struct sockaddr *) &si_other, slen);//sending data
-    printf("Message broadcasted \n");
-    if(e==-1)  error("udp_broadcast: sendto()");
-  }
+  int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
+  if(e==-1)  error("udp_broadcast: sendto()");
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
 }
 
@@ -66,7 +62,7 @@ void *thr_listener(void * arg){
 
   struct sockaddr_in si_me, si_other;
   socklen_t slen = sizeof(si_other);
-  char buf[BUFLEN];
+  //char buf[BUFLEN];
 
   int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   assert(s != -1);
@@ -80,15 +76,21 @@ void *thr_listener(void * arg){
 
   int res = bind(s,(struct sockaddr *) &si_me, sizeof(si_me));
   if(res == -1) error("thr_udpListen:bind");
+
+  msg_s* msg;
+  //bzero(&msg, 2* sizeof(*msg));
+  msg = (msg_s*)malloc(sizeof(msg_s));
+  printf("size of msg %d \n", sizeof(*msg));
   while(1){
-    res = recvfrom(s, buf, BUFLEN, 0,(struct sockaddr *) &si_other, &slen);
+
+    res = recvfrom(s, (void*)msg, 2*sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
     if(res >= BUFLEN-1){
       fprintf(stderr,"recvfrom: length of received message is larger than max message length: %d vs %d\n\n",res,BUFLEN);
       assert(res < BUFLEN-1);
     }
     // printf("Received packet from %s:%d\nLength = %d, Data: <%s>\n\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), res,buf);
-     (*(threadListItem->callback))(inet_ntoa(si_other.sin_addr),buf,res);
+     (*(threadListItem->callback))(msg); //inet_ntoa(si_other.sin_addr),buf,res);
   }
 
   // Never executed - this thread will be killed if it is not needed any more.
