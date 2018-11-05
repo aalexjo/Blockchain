@@ -28,51 +28,62 @@ void Client::display(void) {
 
 void Client::broadcast(void) {
   for(int p = 0; p < process_n; p++) {
-    //if(p != process_i) {
-    msg myMsg;
-    myMsg.sender = process_i;
-    myMsg.receiver = p;
-    myMsg.msg_idx = msg_idx;
-    sendto_udp(p, &myMsg);
-    msg_idx++;
-    //}
+    struct req myReq;
+    myReq.dst = p;
+    sendto_req_udp(&myReq);
   }
+  req_cnt++;
+  printf("Fnished Broadcast. \n");
 }
 
-int Client::sendto_udp(int process, const msg* msg_) {
-  int res;
-  sockaddr_in servaddr;
+void Client::sendto_req_udp(struct req* req_) {
+  int dst = req_->dst;
+  req_->src = process_i;
+  req_->req_cnt = req_cnt;
+
+  struct sockaddr_in dest_addr;
   int sockfd = socket(AF_INET,SOCK_DGRAM,0);
   if(sockfd == -1){
     perror("cannot open socket");
-    return sockfd;
+    exit(1);
   }
 
-  bzero(&servaddr,sizeof(servaddr));
-  servaddr.sin_family = AF_INET;
-  servaddr.sin_addr.s_addr = inet_addr(ips[process].c_str());
-  servaddr.sin_port = htons(ports[process]);
-  if ( (res = sendto(sockfd, (void* ) msg_, sizeof(msg_), 0, (const sockaddr*) &servaddr, sizeof(servaddr))) < 0) {
+  bzero(&dest_addr,sizeof(dest_addr));
+  dest_addr.sin_family = AF_INET;
+  dest_addr.sin_addr.s_addr = inet_addr(ips[dst].c_str());
+  dest_addr.sin_port = htons(ports[dst]);
+
+  if (sendto(sockfd, (void* ) req_, sizeof(req_), 0, (const struct sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
     perror("cannot send message");
+    exit(1);
   }
   close(sockfd);
-  return res;
+  cout << "TX:" << req_->src << "->" << req_->dst << ":" << req_->req_cnt << '\n';
+  cout << " ->" << dest_addr.sin_addr.s_addr << ":" << dest_addr.sin_port << '\n';
 }
 
-void Client::recv_msg_udp(void) {
-  int res;
-  msg myMsg;
-  sockaddr_in servaddr;
-  int sockFd = socket(AF_INET,SOCK_DGRAM,0);
-  bzero(&servaddr,sizeof(servaddr));
-  servaddr.sin_family = AF_INET;
-  servaddr.sin_addr.s_addr = inet_addr(ips[process_i].c_str());
-  servaddr.sin_port = htons(ports[process_i]);
+void Client::recvfrom_req_udp(struct req* req_) {
+  struct sockaddr_in src_addr;
+  bzero(&src_addr,sizeof(src_addr));
+  src_addr.sin_family = AF_INET;
+  src_addr.sin_addr.s_addr = inet_addr(ips[process_i].c_str());
+  src_addr.sin_port = htons(ports[process_i]);
 
-  if ( (res = recvfrom(sockfd, (void *) &myMsg, sizeof(myMsg), 0, (sockaddr*)&servaddr, sizeof(servaddr)) < 0) ) {
+  int sockfd = socket(AF_INET,SOCK_DGRAM,0);
+  if(sockfd == -1){
+    perror("cannot open socket");
+    exit(1);
+  }
+
+  if(bind(sockfd, (struct sockaddr *) &src_addr, sizeof(src_addr))) {
+    perror("cannot bind socket");
+    exit(1);
+  }
+
+  if (recvfrom(sockfd, (void *) req_, sizeof(req_), 0, (sockaddr*) &src_addr, 0) == -1) {
     perror("cannot receive message");
     exit(1);
   }
-  printf("Received message");
   close(sockfd);
+  cout << "RX:" << req_->src << "->" << req_->dst << ":" << req_->req_cnt << '\n';
 }

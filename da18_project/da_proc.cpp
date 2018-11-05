@@ -67,8 +67,10 @@ int main(int argc, char** argv) {
 	//initialize application
 
   Client client(process_i, process_n, message_n, ids, ips, ports);
+  struct req myReq;
   client.display();
-  client.sendto_udp(1);
+  client.broadcast();
+  client.recvfrom_req_udp(&myReq);
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
 
