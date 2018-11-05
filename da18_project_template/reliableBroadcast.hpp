@@ -3,18 +3,19 @@
 
 class reliableBroadcast{
 public:
-  reliableBroadcast(int m);
+  reliableBroadcast(int n, int pid);
 
   void broadcast(char const * data, int dataLength);
   void receiver();
   bool canDeliver();
 private:
   perfectLink link;
-  int m;
+  int n;
+  int pid
   std::vector<bool> delivered;
-  std::vector<bool> forward;
+  std::vector<bool> pending;
   std::vector<bool> correct;
-  std::vector<std::vector<bool>> ack;
+  std::vector<int> ack;
 
 
 }

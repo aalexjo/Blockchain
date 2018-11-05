@@ -5,17 +5,18 @@
 #include "UDP.hpp"
 
 static int wait_for_start = 0;
-
+//static int pNumber, msgNum;
+//char  membership;
 static void start(int signum) {
 	printf("Starting.\n");
 	wait_for_start = 0;
 }
 
-void UDPTestCallback(const char * ip, char * data, int datalength){
+void UDPTestCallback(struct msg_s* msg){//const char * ip, char * data, int datalength){
 
   // Assuming an ascii string here - a binary blob (including '0's) will
   // be ugly/truncated.
-  printf("Received UDP message from %s: '%s'\n",ip,data);
+  printf("Received UDP message from %d with seq number '%d'\n",msg->sender, msg->seq_nr);
 
 }
 
@@ -33,7 +34,17 @@ static void stop(int signum) {
 	//exit directly from signal handler
 	exit(0);
 }
-
+/*
+void parseArguments(int argc, char** argv);{
+	if (argc < 3){
+		printf("too few arguments\n" );
+		exit(0);
+	}
+	pNumber = atoi(argv[0]);
+	membership = argv[1];
+	msgNum = atoi(argv[2]);
+}
+*/
 int main(int argc, char** argv) {
 
 	//set signal handlers
@@ -41,6 +52,16 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 
+/*
+	//parse command line arguments
+	if (argc < 3){
+		printf("too few arguments\n" );
+		exit(0);
+	}
+	pNumber = atoi(argv[0]);
+	membership = argv[1];
+	msgNum = atoi(argv[2]);
+*/
 	char const *addr = "127.0.0.1";
 	int port = 1729;
 	//parse arguments, including membership
@@ -60,14 +81,20 @@ int main(int argc, char** argv) {
 		nanosleep(&sleep_time, NULL);
 	}
 
+	struct msg_s msg;
+	//bzero(&msg, sizeof(msg));
+	msg.seq_nr = 4;
+	msg.sender = 8;
+	msg.is_ack = false;
+	msg.ack_from = 0;
 
 	//broadcast messages
 	printf("Broadcasting messages.\n");
 
-
 	//wait until stopped
 	while(1) {
-		udp.broadcast("hallo all",10 );
+		msg.seq_nr = msg.seq_nr + 1;
+		udp.broadcast(&msg);//"hallo all",10 );
 		struct timespec sleep_time;
 		sleep_time.tv_sec = 1;
 		sleep_time.tv_nsec = 0;
