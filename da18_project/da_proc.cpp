@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
 #include "client.hpp"
 
 using namespace std;
@@ -41,34 +42,33 @@ int main(int argc, char** argv) {
 	signal(SIGINT, stop);
 
 	//parse arguments, including membership
-  assert(argc >= 2 + 3 + 1);
+  assert(argc == 4);
   int process_i = atoi(argv[1]);
-  int process_n = atoi(argv[2]);
-  int message_n = atoi(argv[argc-1]);
-  assert(process_i <= process_n);
-  assert(4 + (process_n)*3 == argc);
+  char* file_name = argv[2];
+  int message_n = atoi(argv[3]);
 
-  vector <int> id;
+  //parse membership
+  fstream  membership;
+  int id, port;
+  string ip;
+
+  int process_n;
+  vector <int> ids;
   vector <string> ips;
-  vector <string> ports;
-  for (int i = 3; i < argc - 1; i+=3) {
-    id.push_back(atoi(argv[i]));
-    ips.push_back(argv[i+1]);
-    ports.push_back(argv[i+2]);
+  vector <int> ports;
+  membership.open(file_name, ios::in);
+  membership >> process_n;
+  while(membership >> id >> ip >> port) {
+    ids.push_back(id);
+    ips.push_back(ip);
+    ports.push_back(port);
   }
-
-  /* Debug printing
-  cout << "argc:" << argc << '\n';
-  cout << "process number"<< ":" << "ip" << ":" << "port" << '\n';
-  for (int i = 0; i < process_n; i++) {
-    cout << id[i] << ":" << ips[i] << ":" << ports[i] << '\n';
-  }
-  // */
-
-  Client client(process_i, process_n, message_n, id, ips, ports);
-  client.display();
-
+  membership.close();
 	//initialize application
+
+  Client client(process_i, process_n, message_n, ids, ips, ports);
+  client.display();
+  client.sendto_udp(1);
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
 
