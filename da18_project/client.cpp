@@ -56,8 +56,13 @@ void Client::urbBroadcast(int seq_nbr, int sockfd) {
   //muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
   //muFwrd.unlock();
+<<<<<<< HEAD
   printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
   fprintf(fout, "b %d\n", msg.seq_nbr);
+=======
+  printf("pid:%i:BROADCAST:SEND:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+
+>>>>>>> 91d7993be7a3a92e52aef8f4f677842cd1e08c1d
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
 }
@@ -69,7 +74,6 @@ void Client::broadcastMessages(void) {
     exit(1);
   }
 
-  printf("Start Broadcasting %i messages. \n", message_n);
   for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
     // Trigger urbBroadcast
     urbBroadcast(seq_nbr, sockfd);
@@ -137,18 +141,17 @@ void Client::startReceiving(void) {
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
           //muFwrd.unlock();
-          printf("FORWARD:SEND:[%i,m[%i,%i]]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
+          printf("pid:%i:FORWARD:SEND:[%i,m[%i,%i]]\n", pid, new_msg.src, new_msg.creator, new_msg.seq_nbr);
 
           bebBroadcast(new_msg, sockfd);
 
-
           // Trigger URB check for Delivery
-          urbDeliverCheck(msg.creator, msg.seq_nbr);
         }
         // End bebDeliver trigger in URB
         // End bebDeliver trigger in beb
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
-        printf("PL  :DELV:[%i:m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
+        urbDeliverCheck(msg.creator, msg.seq_nbr);
+        printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // End pp2pDeliver
       }
 
@@ -166,11 +169,12 @@ void Client::startReceiving(void) {
 
 // Thread to be spawned that checks whenever process is done delivering everything necessary
 void Client::urbDeliverCheck(int creator, int seq_nbr) {
+  int nbr_rdy = 0;
   if (!deliveredURB[creator][seq_nbr]) {
-    int nbr_rdy = 0;
     for(int p = 0; p < process_n; p++) {
       if(ack[creator][seq_nbr][p]) {
         nbr_rdy++;
+        printf("nbr_rdy++:%i", nbr_rdy);
       }
     }
     printf("NBR_RDY: %i\n", nbr_rdy);
@@ -178,7 +182,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
     // Majoity Ack
     if(nbr_rdy > (process_n-1)/2) {
       //Trigger urbDeliver
-      printf("URB :DELV:m[%i,%i]. \n", creator, seq_nbr);
+      printf("pid:%i:URB :DELV:m[%i,%i]. \n", pid, creator, seq_nbr);
       deliveredURB[creator][seq_nbr] = true;
     }
   }
