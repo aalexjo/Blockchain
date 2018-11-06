@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <set>
-
+#include <functional>
 typedef void (*perfectLinkMessageCallback)(struct msg_s* msg);
 // const char *ip, char *data, int datalength ^
 
@@ -19,13 +19,12 @@ typedef struct{
 
 class PerfectLink{
 public:
-  PerfectLink(int id, std::vector<int> ports, perfectLinkMessageCallback callback);
+  PerfectLink(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback);
   void broadcast(struct msg_s* msg);
   void startReceiving();
 
 private:
   static void UDPcallback(struct msg_s* msg);
   UDP udp;
-  //template<typename T>
-  void* owner;
+
 };

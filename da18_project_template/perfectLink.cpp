@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "perfectLink.hpp"
 
-PerfectLink::PerfectLink(int pid, std::vector<int> ports, perfectLinkMessageCallback callback): udp(pid, ports, callback), owner(owner){
+PerfectLink::PerfectLink(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): udp(pid, ports, callback){
 
 }
 
@@ -34,4 +34,5 @@ void PerfectLink::startReceiving(){
 
 void PerfectLink::UDPcallback(struct msg_s* msg){
   //owner->pp2pCallback(this->owner, msg);
+  printf("lolol\n" );
 }

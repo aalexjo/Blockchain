@@ -13,8 +13,9 @@ public:
   bool canDeliver(int pi_sender, int m);
 
 private:
-	static void pp2pCallback(struct msg_s* msg);
+	void pp2pCallback(struct msg_s* msg);
 	int n; //num of Procsess
+  int max_m;
   int pid;
 	PerfectLink* link;
 	unsigned int seq_nr;

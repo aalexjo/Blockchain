@@ -2,12 +2,12 @@
 #pragma once
 #include <string>
 #include <vector>
-
+#include <functional>
 typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *data, int datalength);
 
 typedef struct{
   int port;
-  UDPMessageCallback callback;
+  std::function<void(msg_s*)> callback;
 } UDPThreadList;
 
 struct msg_s{
@@ -20,7 +20,7 @@ struct msg_s{
 
 class UDP{
 public:
-  UDP(int pid, std::vector<int> ports, UDPMessageCallback callback);
+  UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback);
   void broadcast(struct msg_s* msg);//char const * data, int dataLength);
   void startReceiving();
 

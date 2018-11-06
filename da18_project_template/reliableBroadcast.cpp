@@ -1,13 +1,15 @@
 #include "reliableBroadcast.hpp"
 #include <functional>
 
-reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): forward(n), ack(n){
-	this->n = n;
+reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): n(n),  pid(pid), forward(n), ack(n){
   seq_nr = 0;
-  link = new PerfectLink(n, ports, pp2pCallback);
+  using namespace std::placeholders;
+  link = new PerfectLink(pid, ports, std::bind(&reliableBroadcast::pp2pCallback, this, _1));
   link->startReceiving();
 
 }
+
+
 
 void reliableBroadcast::broadcast(struct msg_s* msg){
   this->forward[pid].push_back(msg->seq_nr);
@@ -18,23 +20,23 @@ void reliableBroadcast::broadcast(struct msg_s* msg){
 
 void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
     if (msg->is_ack == true){
-        for( auto it = this->ack[msg->sender][msg->seq_nr].begin(); it != this->ack[msg->sender][msg->seq_nr].end(); ++it){ //lol this looks bad
+        for( auto it = ack[msg->sender][msg->seq_nr].begin(); it != ack[msg->sender][msg->seq_nr].end(); ++it){ //lol this looks bad
           if (*it == msg->ack_from){//Have we already recived this ack before, pp2pl might redeliver
             return;
           }
-          this->ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
+          ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
         }
     }
 
-    for(auto it = this->forward[msg->sender].rbegin(); it != this->forward[msg->sender].rend(); ++it){//iterate backwards because it is likly further back
+    for(auto it = forward[msg->sender].rbegin(); it != forward[msg->sender].rend(); ++it){//iterate backwards because it is likly further back
       if (*it == msg->seq_nr){//have we already acked this message?
         return;
       }
     }
-    this->forward[msg->sender].push_back(msg->seq_nr);
+    forward[msg->sender].push_back(msg->seq_nr);
     msg->is_ack = true;
-    msg->ack_from = this->pid;
-    this->link->broadcast(msg);
+    msg->ack_from = pid;
+    link->broadcast(msg);
 }
 
 /*
@@ -53,8 +55,12 @@ void reliableBroadcast::receiver(){
 }*/
 
 bool reliableBroadcast::canDeliver(int pi_sender, int m){
-	if (this->ack[pi_sender][m].size() > n / 2) {
-		return true;
-	}
+  pi_sender--;
+  if(this->ack[pi_sender].find(m) != this->ack[pi_sender].end()){
+    printf("it exists\n" );
+	      if (this->ack[pi_sender][m].size() > 0) {
+		     return true;
+	      }
+      }
 	return false;
 }

@@ -6,7 +6,7 @@
 #include <fstream>
 #include "reliableBroadcast.hpp"
 #include "perfectLink.hpp"
-
+#include "FIFObroadcast.hpp"
 using namespace std;
 
 
@@ -87,10 +87,12 @@ int main(int argc, char** argv) {
 	//initialize application
 
 	printf("Initializing.\n");
-	printf("port %d, pid: %d", ports[pid],pid);
+	//printf("port %d, pid: %d", ports[pid],pid);
 
 	//PerfectLink perfectLink(pid, ports, perfectLinkTestCallback);
 	//perfectLink.startReceiving();
+	FIFObroadcast fifo(process_n, pid, ports);
+	fifo.startReceiving();
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -103,7 +105,7 @@ int main(int argc, char** argv) {
 	struct msg_s msg;
 	//bzero(&msg, sizeof(msg));
 	msg.seq_nr = 0;
-	msg.sender = 8;
+	msg.sender = pid;
 	msg.is_ack = false;
 	msg.ack_from = 0;
 
@@ -114,6 +116,7 @@ int main(int argc, char** argv) {
 	while(1) {
 		msg.seq_nr = msg.seq_nr + 1;
 		//perfectLink.broadcast(&msg);//"hallo all",10 );
+		fifo.broadcast(&msg);
 		struct timespec sleep_time;
 		sleep_time.tv_sec = 1;
 		sleep_time.tv_nsec = 0;

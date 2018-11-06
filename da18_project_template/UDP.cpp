@@ -28,9 +28,9 @@ void error(char const *e){
   exit(1);
 }
 
-UDP::UDP(int pid, std::vector<int> ports, UDPMessageCallback callback): ports(ports){
+UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports){
   threadListItem = {ports[pid], callback};
-
+  printf("ports: %d\n",ports[pid] );
 }
 
 void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
@@ -90,8 +90,7 @@ void *thr_listener(void * arg){
       fprintf(stderr,"recvfrom: length of received message is larger than max message length: %d vs %d\n\n",res,BUFLEN);
       assert(res < BUFLEN-1);
     }
-    // printf("Received packet from %s:%d\nLength = %d, Data: <%s>\n\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), res,buf);
-     (*(threadListItem->callback))(msg); //inet_ntoa(si_other.sin_addr),buf,res);
+     ((threadListItem->callback))(msg);
   }
 
   // Never executed - this thread will be killed if it is not needed any more.

@@ -1,5 +1,11 @@
 #include "reliableBroadcast.hpp"
 
+typedef struct{
+  reliableBroadcast *URB;
+  int n;
+  std::vector<int>* delivered;
+}FIFOThreadList;
+
 class FIFObroadcast{
 public:
   FIFObroadcast(int n, int pid, std::vector<int> ports);
@@ -8,7 +14,7 @@ public:
   void startReceiving();
 
 private:
-  reliableBroadcast URB;
+  reliableBroadcast *URB;
   int n;
   int pid;
   std::vector<int> delivered;
