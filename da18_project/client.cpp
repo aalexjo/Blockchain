@@ -53,7 +53,7 @@ void Client::urbBroadcast(int seq_nbr, int sockfd) {
   //muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
   //muFwrd.unlock();
-  printf("BROADCAST:SEND:%i:m[%i,%i]\n", msg.src, msg.creator, msg.seq_nbr);
+  printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
 
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
@@ -134,7 +134,7 @@ void Client::startReceiving(void) {
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
           //muFwrd.unlock();
-          printf("FORWARD  :SEND:%i:m[%i,%i]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
+          printf("FORWARD:SEND:[%i,m[%i,%i]]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
 
           bebBroadcast(new_msg, sockfd);
 
@@ -145,6 +145,7 @@ void Client::startReceiving(void) {
         // End bebDeliver trigger in URB
         // End bebDeliver trigger in beb
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
+        printf("PL  :DELV:[%i:m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
         // End pp2pDeliver
       }
 
@@ -169,18 +170,19 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
         nbr_rdy++;
       }
     }
+    printf("NBR_RDY: %i\n", nbr_rdy);
 
     // Majoity Ack
-    if(nbr_rdy > process_n/2) {
+    if(nbr_rdy > (process_n-1)/2) {
       //Trigger urbDeliver
-      printf("URB:p(%i):%i. \n", creator, seq_nbr);
+      printf("URB :DELV:m[%i,%i]. \n", creator, seq_nbr);
       deliveredURB[creator][seq_nbr] = true;
     }
   }
 
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver, pid, m=[creator, seq_nbr]
+    printf("FIFO:DELV:m[%i,%i].\n", creator, curr_head[creator]);
     curr_head[creator]++;
-    printf("FIFO delivered");
   }
 }
