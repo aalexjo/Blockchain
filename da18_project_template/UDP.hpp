@@ -1,8 +1,7 @@
 //kanskje noen headergaurds
 #pragma once
 #include <string>
-
-using namespace std;
+#include <vector>
 
 typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *data, int datalength);
 
@@ -21,7 +20,7 @@ struct msg_s{
 
 class UDP{
 public:
-  UDP(const char* ipaddr, int port, UDPMessageCallback callback);
+  UDP(const char* ipaddr, int port, std::vector<int> ports, UDPMessageCallback callback);
   void broadcast(struct msg_s* msg);//char const * data, int dataLength);
   void startReceiving();
 
@@ -30,4 +29,5 @@ private:
   //void *thr_listener(void* arg);
   UDPThreadList threadListItem;
   const char* ipaddr;
+  std::vector<int> ports;
 };

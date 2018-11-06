@@ -28,8 +28,8 @@ void error(char const *e){
   exit(1);
 }
 
-UDP::UDP(const char* ipaddr, int port, UDPMessageCallback callback): ipaddr(ipaddr){
-  threadListItem = {port, callback};
+UDP::UDP(const char* ipaddr, int pid, std::vector<int> ports, UDPMessageCallback callback): ipaddr(ipaddr), ports(ports){
+  threadListItem = {ports[pid], callback};
 
 }
 
@@ -45,13 +45,14 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
 
   memset((char *) &si_other, 0, sizeof(si_other)); //clearing si_other
   si_other.sin_family = AF_INET;
-  si_other.sin_port = htons(threadListItem.port);
-  if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) {//setting destination address
-    fprintf(stderr, "inet_aton() failed\n");
-    exit(1);
+
+  //TODO: loop through all ports to send to
+  for( auto it = ports.begin(); it != ports.end(), ++it){
+    si_other.sin_port = htons(*it);//threadListItem.port);
+    if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
+    int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
+    if(e==-1)  error("udp_broadcast: sendto()");
   }
-  int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
-  if(e==-1)  error("udp_broadcast: sendto()");
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
 }
 
@@ -69,7 +70,7 @@ void *thr_listener(void * arg){
 
   memset((char *) &si_me, 0, sizeof(si_me));
   si_me.sin_family = AF_INET;
-  si_me.sin_port = htons(threadListItem->port);
+  si_me.sin_port = htons(ports[pid]);//threadListItem->port);
   si_me.sin_addr.s_addr = htonl(INADDR_ANY);
   int optval = 1;
   setsockopt(s,SOL_SOCKET,SO_REUSEADDR, &optval, sizeof(optval));
