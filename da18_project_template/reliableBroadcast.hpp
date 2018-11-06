@@ -14,6 +14,8 @@ public:
 
 private:
 	void pp2pCallback(struct msg_s* msg);
+  msg_s* ack_msg;
+
 	int n; //num of Procsess
   int max_m;
   int pid;

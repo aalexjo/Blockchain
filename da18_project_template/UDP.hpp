@@ -4,17 +4,17 @@
 #include <vector>
 #include <functional>
 typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *data, int datalength);
-
+//int piders;
 typedef struct{
   int port;
   std::function<void(msg_s*)> callback;
 } UDPThreadList;
 
 struct msg_s{
-  int seq_nr;
-  int sender;
-  bool is_ack;
-  int ack_from;
+  uint16_t seq_nr;
+  uint16_t sender;
+  uint16_t is_ack;
+  uint16_t ack_from;
   //string msg;
 };
 

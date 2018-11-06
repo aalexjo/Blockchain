@@ -12,7 +12,7 @@ typedef void (*perfectLinkMessageCallback)(struct msg_s* msg);
 void error(char const *e);
 
 typedef struct{
-  UDP udp;
+  UDP* udp;
   msg_s *msg;
 } perfectLinkThreadList;
 
@@ -25,6 +25,7 @@ public:
 
 private:
   static void UDPcallback(struct msg_s* msg);
-  UDP udp;
+  perfectLinkThreadList threadListItem;
+  UDP* udp;
 
 };

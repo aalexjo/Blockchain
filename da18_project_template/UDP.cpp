@@ -29,7 +29,6 @@ void error(char const *e){
 }
 
 UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports){
-  printf("port %d", ports[pid]);
   threadListItem = {ports[pid], callback};
 }
 
@@ -81,16 +80,18 @@ void *thr_listener(void * arg){
 
   msg_s* msg;
   //bzero(&msg, 2* sizeof(*msg));
-  msg = (msg_s*)malloc(sizeof(msg_s));
+  msg = new msg_s;
   while(1){
 
-    res = recvfrom(s, (void*)msg, sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
+    res = recvfrom(s, (void*)msg, 2*sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
     if(res >= BUFLEN-1){
       fprintf(stderr,"recvfrom: length of received message is larger than max message length: %d vs %d\n\n",res,BUFLEN);
       assert(res < BUFLEN-1);
     }
      ((threadListItem->callback))(msg);
+
+     //if(msg->is_ack == true && msg->ack_from != piders) printf("we got someone elses ack!!!\n" );
   }
 
   // Never executed - this thread will be killed if it is not needed any more.
