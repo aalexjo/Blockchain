@@ -50,9 +50,9 @@ void Client::bebBroadcast(msg_s msg, int sockfd) {
 
 void Client::urbBroadcast(int seq_nbr, int sockfd) {
   msg_s msg = { false, pid, seq_nbr, pid};
-  muFwrd.lock();
+  //muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
-  muFwrd.unlock();
+  //muFwrd.unlock();
   printf("BROADCAST:SEND:%i:m[%i,%i]\n", msg.src, msg.creator, msg.seq_nbr);
 
   // Trigger bebBroadcast
@@ -66,6 +66,7 @@ void Client::broadcastMessages(void) {
     exit(1);
   }
 
+  printf("Start Broadcasting %i messages. \n", message_n);
   for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
     // Trigger urbBroadcast
     urbBroadcast(seq_nbr, sockfd);
@@ -129,14 +130,11 @@ void Client::startReceiving(void) {
         // Event bebDeliver in URB
         ack[msg.creator][msg.seq_nbr][msg.src] = true;
 
-        muFwrd.lock();
+        //muFwrd.lock();
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
-          muFwrd.unlock();
+          //muFwrd.unlock();
           printf("FORWARD  :SEND:%i:m[%i,%i]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
-          //printf("RESV:%i:m[%i,%i]\n", msg.src    , msg.creator,     msg.seq_nbr);
-          //printf("SEND:%i:m[%i,%i]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
-          //printf("\n");
 
           bebBroadcast(new_msg, sockfd);
 
