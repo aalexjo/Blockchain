@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	signal(SIGINT, stop);
 
 	//parse arguments, including membership
-  assert(argc == 4);
+  //assert(argc == 4);
   int process_i = atoi(argv[1]);
   char* file_name = argv[2];
   int message_n = atoi(argv[3]);
@@ -70,21 +70,21 @@ int main(int argc, char** argv) {
   Client client(process_i, process_n, message_n, ids, ips, ports);
   client.display();
   thread receiveMsgs(&Client::startReceiving, client);
-  client.broadcast();
-  client.broadcast();
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
 
 	//wait until start signal
 	while(wait_for_start) {
 		struct timespec sleep_time;
-		sleep_time.tv_sec = 0;
+		sleep_time.tv_sec = 2;
 		sleep_time.tv_nsec = 1000;
 		nanosleep(&sleep_time, NULL);
+    wait_for_start = 0;
 	}
 
 	//broadcast messages
 	printf("Broadcasting messages.\n");
+  client.broadcastMessagesFIFO();
 
 	//wait until stopped
 	while(1) {

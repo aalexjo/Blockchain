@@ -26,11 +26,12 @@ private :
   vector <string> ips;
   vector <int> ports;
   vector< vector<int> > delivered;
+  void broadcast(Layer layer);
+  void sendto_req_udp(int dest_p, int sockfd, Layer layer);
 
 public :
   Client(int process_i, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports);
   void display(void);
   void startReceiving(void);
-  void broadcast(void);
-  void sendto_req_udp(int dest_p, int sockfd, Layer layer);
+  void broadcastMessagesFIFO(void);
 };

@@ -31,17 +31,26 @@ void Client::display(void) {
   }
 }
 
-void Client::broadcast(void) {
+void Client::broadcast(Layer layer) {
   int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sockfd == -1){
     perror("cannot open socket");
     exit(1);
   }
   for(int p = 0; p < process_n; p++) {
-    sendto_req_udp(p, sockfd, BEB);
+    sendto_req_udp(p, sockfd, layer);
   }
-  seq_nbr += 1;
+  close(sockfd);
 }
+
+void Client::broadcastMessagesFIFO(void) {
+  while(seq_nbr < message_n) {
+    broadcast(FIFO);
+    seq_nbr += 1;
+  }
+}
+
+
 
 void Client::sendto_req_udp(int dst, int sockfd, Layer layer) {
   struct req req_;
@@ -56,8 +65,7 @@ void Client::sendto_req_udp(int dst, int sockfd, Layer layer) {
   dest_addr.sin_addr.s_addr = inet_addr(ips[dst].c_str());
   dest_addr.sin_port = htons(ports[dst]);
 
-  //printf("TX:%u:%u->%u:%i\n", req_.layer, req_.src, req_.dst, req_.seq_nbr);
-  cout << "TX:" << req_.layer << ":" << req_.src << "->" << req_.dst << ":" << req_.seq_nbr << '\n';
+  printf("TX:%u:%u->%u:%i\n", req_.layer, req_.src, req_.dst, req_.seq_nbr);
   if (sendto(sockfd, (void* ) &req_, sizeof(req_), 0, (const sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
     perror("cannot send message");
     exit(1);
@@ -89,6 +97,6 @@ void Client::startReceiving(void) {
       perror("cannot receive message");
       exit(1);
     }
-    cout << "RX:" << req_.layer << ":" << req_.src << "->" << req_.dst << ":" << req_.seq_nbr << '\n';
+    printf("RX:%u:%u->%u:%i\n", req_.layer, req_.src, req_.dst, req_.seq_nbr);
   }
 }
