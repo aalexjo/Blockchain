@@ -16,10 +16,10 @@ void *thr_receiver(void *arg) {
   FIFOThreadList * threadListItem = (FIFOThreadList*) arg;
 
   while(true){
-    for(int i = 0; i<=threadListItem->n; i++){
-      if (threadListItem->URB->canDeliver(i, (*threadListItem->delivered)[i])){
+    for(int i = 0; i<threadListItem->n; i++){
+      if (threadListItem->URB->canDeliver(i, (*threadListItem->delivered)[i]+1)){
         //TODO:deliver that shit
-        std::cout<<"d "<< i << ++(*threadListItem->delivered)[i] << std::endl;
+        std::cout<<"d "<< i << " " << ++(*threadListItem->delivered)[i] << std::endl;
       }
     }
   }

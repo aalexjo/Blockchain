@@ -13,6 +13,7 @@ reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): n(
 
 void reliableBroadcast::broadcast(struct msg_s* msg){
   this->forward[pid].push_back(msg->seq_nr);
+  this->ack[pid][msg->seq_nr].push_back(pid);
   link->broadcast(msg);
 }
 
@@ -20,12 +21,16 @@ void reliableBroadcast::broadcast(struct msg_s* msg){
 
 void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
     if (msg->is_ack == true){
+      if(ack[msg->sender][msg->seq_nr].empty()){
+        ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
+      }else{
         for( auto it = ack[msg->sender][msg->seq_nr].begin(); it != ack[msg->sender][msg->seq_nr].end(); ++it){ //lol this looks bad
           if (*it == msg->ack_from){//Have we already recived this ack before, pp2pl might redeliver
             return;
           }
           ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
         }
+      }
     }
 
     for(auto it = forward[msg->sender].rbegin(); it != forward[msg->sender].rend(); ++it){//iterate backwards because it is likly further back
@@ -35,7 +40,7 @@ void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
     }
     forward[msg->sender].push_back(msg->seq_nr);
     msg->is_ack = true;
-    msg->ack_from = pid;
+    msg->ack_from = pid+1; //pid is 0 indexed
     link->broadcast(msg);
 }
 
@@ -55,10 +60,11 @@ void reliableBroadcast::receiver(){
 }*/
 
 bool reliableBroadcast::canDeliver(int pi_sender, int m){
-  pi_sender--;
+  //pi_sender--;
+  //printf("can we deliver msg: %d from sender: %d\n", m, pi_sender );
+
   if(this->ack[pi_sender].find(m) != this->ack[pi_sender].end()){
-    printf("it exists\n" );
-	      if (this->ack[pi_sender][m].size() > 0) {
+	      if (this->ack[pi_sender][m].size() > n/2) {
 		     return true;
 	      }
       }

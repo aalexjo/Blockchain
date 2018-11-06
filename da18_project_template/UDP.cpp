@@ -29,8 +29,8 @@ void error(char const *e){
 }
 
 UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports){
+  printf("port %d", ports[pid]);
   threadListItem = {ports[pid], callback};
-  printf("ports: %d\n",ports[pid] );
 }
 
 void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
@@ -47,13 +47,13 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   si_other.sin_family = AF_INET;
 
   //TODO: loop through all ports to send to
-  //for( auto it = this->ports.begin(); it != this->ports.end(); ++it){
+  for( auto it = this->ports.begin(); it != this->ports.end(); ++it){
     //printf("Sent: msg-> sender %d\n", msg->sender);
-    si_other.sin_port = htons(threadListItem.port);
+    si_other.sin_port = htons(*it);//threadListItem.port);
     if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
     int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
     if(e==-1)  error("udp_broadcast: sendto()");
-  //}
+  }
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
 }
 

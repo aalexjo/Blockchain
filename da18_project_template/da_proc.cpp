@@ -10,7 +10,7 @@
 using namespace std;
 
 
-static int wait_for_start = 0;
+static int wait_for_start = 1;
 //static int pNumber, msgNum;
 //char  membership;
 static void start(int signum) {
@@ -62,9 +62,6 @@ int main(int argc, char** argv) {
   char* file_name = argv[2];
 //  int message_n = atoi(argv[3]);
 
-	printf("file_name %s\n", file_name);
-
-
   //parse membership
   fstream  membership;
   int id, port;
@@ -91,7 +88,7 @@ int main(int argc, char** argv) {
 
 	//PerfectLink perfectLink(pid, ports, perfectLinkTestCallback);
 	//perfectLink.startReceiving();
-	FIFObroadcast fifo(process_n, pid, ports);
+	FIFObroadcast fifo(process_n, pid-1, ports);
 	fifo.startReceiving();
 
 	//wait until start signal
