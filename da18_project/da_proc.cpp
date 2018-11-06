@@ -68,10 +68,11 @@ int main(int argc, char** argv) {
 
 	//initialize application
   Client client(process_i, process_n, message_n, ids, ips, ports);
-  client.display();
-  thread receiveMsgs(&Client::startReceiving, client);
+  //client.display();
+
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
+  thread receiveMsgs(&Client::startReceiving, client);
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
 
 	//broadcast messages
 	printf("Broadcasting messages.\n");
-  client.broadcastMessagesFIFO();
+  client.broadcastMessages();
 
 	//wait until stopped
 	while(1) {

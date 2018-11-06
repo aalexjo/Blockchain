@@ -7,31 +7,32 @@
 
 using namespace std;
 
-enum Layer { PL, BEB, URB, FIFO };
-struct req {
-  int dst;
-  int src;
+struct msg_s {
+  bool is_ack;
+  int creator;
   int seq_nbr;
-  Layer layer;
+  int src;
 };
 
 class Client {
 private :
   sockaddr_in self_addr;
   int seq_nbr = 0;
-  int process_i;
+  int pid;
   int process_n;
   int message_n;
   vector <int> id;
   vector <string> ips;
   vector <int> ports;
-  vector< vector<int> > delivered;
-  void broadcast(Layer layer);
-  void sendto_req_udp(int dest_p, int sockfd, Layer layer);
+  vector< vector< vector<bool> > > deliveredPL, deliveredURB, ack;
+  vector< vector< bool>  > forwarded;
+  void bebBroadcast(msg_s msg, int sockfd);
+  void urbBroadcast(int seq_nbr, int sockfd);
+  void sendto_udp(msg_s msg, int dst, int sockfd);
 
 public :
-  Client(int process_i, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports);
+  Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports);
   void display(void);
   void startReceiving(void);
-  void broadcastMessagesFIFO(void);
+  void broadcastMessages(void);
 };
