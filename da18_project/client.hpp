@@ -4,7 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <string>
-
+#include <cstdio>
 using namespace std;
 
 struct msg_s {
@@ -31,6 +31,8 @@ private :
   void urbBroadcast(int seq_nbr, int sockfd);
   void sendto_udp(msg_s msg, int dst, int sockfd);
   void urbDeliverCheck(int creator, int seq_nbr);
+
+  FILE *fout;
 
 public :
   Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports);

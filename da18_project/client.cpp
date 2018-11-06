@@ -29,6 +29,9 @@ Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <s
   forwarded    = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
   ack = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   curr_head = vector<int>(process_n, 0);
+  string fname = "da_proc_" + to_string(pid) + ".txt";
+  fout = fopen(fname.c_str(), "w+");
+
 }
 
 void Client::display(void) {
@@ -54,7 +57,7 @@ void Client::urbBroadcast(int seq_nbr, int sockfd) {
   forwarded[msg.creator][msg.seq_nbr] = true;
   //muFwrd.unlock();
   printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
-
+  fprintf(fout, "b %d\n", msg.seq_nbr);
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
 }
@@ -183,6 +186,8 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver, pid, m=[creator, seq_nbr]
     printf("FIFO:DELV:m[%i,%i].\n", creator, curr_head[creator]);
+    fprintf(fout, "d %d %d\n", seq_nbr, creator);
+
     curr_head[creator]++;
   }
 }

@@ -1,0 +1,44 @@
+make: Nothing to be done for 'all'.
+Initializing.
+Broadcasting messages.
+Start Broadcasting 3 messages. 
+BROADCAST:SEND:[0,m[0,0]]
+BROADCAST:SEND:[0,m[0,1]]
+BROADCAST:SEND:[0,m[0,2]]
+PL  :DELV:[0:m[0,2]]
+PL  :DELV:[0:m[0,1]]
+FORWARD:SEND:[0,m[1,2]]
+NBR_RDY: 1
+URB :DELV:m[1,2]. 
+PL  :DELV:[1:m[1,2]]
+PL  :DELV:[0:m[1,2]]
+Immediately stopping network packet processing.
+Writing output.
+Initializing.
+Broadcasting messages.
+Start Broadcasting 3 messages. 
+BROADCAST:SEND:[1,m[1,0]]
+BROADCAST:SEND:[1,m[1,1]]
+BROADCAST:SEND:[1,m[1,2]]
+FORWARD:SEND:[1,m[0,1]]
+NBR_RDY: 1
+URB :DELV:m[0,1]. 
+PL  :DELV:[0:m[0,1]]
+PL  :DELV:[1:m[0,1]]
+FORWARD:SEND:[1,m[0,2]]
+NBR_RDY: 1
+URB :DELV:m[0,2]. 
+PL  :DELV:[0:m[0,2]]
+FORWARD:SEND:[1,m[0,0]]
+NBR_RDY: 1
+URB :DELV:m[0,0]. 
+FIFO:DELV:m[0,0].
+FIFO:DELV:m[0,1].
+FIFO:DELV:m[0,2].
+PL  :DELV:[0:m[0,0]]
+PL  :DELV:[1:m[1,0]]
+PL  :DELV:[1:m[0,2]]
+PL  :DELV:[1:m[0,0]]
+Immediately stopping network packet processing.
+Writing output.
+Correctness test done.
