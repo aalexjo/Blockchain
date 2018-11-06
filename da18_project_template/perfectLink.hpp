@@ -3,26 +3,25 @@
 #include <string>
 #include <set>
 
-typedef void (*perfectLinkMessageCallback)(const char *ip, char *data, int datalength);
+typedef void (*perfectLinkMessageCallback)(struct msg_s* msg);
+// const char *ip, char *data, int datalength ^
 
 void error(char const *e);
 
 typedef struct{
   UDP udp;
-  char const *data;
-  int datalength;
+  msg_s *msg;
 } perfectLinkThreadList;
 
-class perfectLink{
+class PerfectLink{
 public:
-  perfectLink(const char* addr, int port, perfectLinkMessageCallback callback);
-  void broadcast(const char* data, int datalength);
+  PerfectLink(const char* addr, int port, perfectLinkMessageCallback callback);
+  void broadcast(struct msg_s* msg);
   void startReceiving();
 private:
   //std::vector<std::string> delivered;
-  std::set<char> delivered;
-  int messagesSent;
+  std::vector<perfectLinkThreadList> delivered;
   std::string processID;
+  //static void udpcallback(struct msg_s* msg);
   UDP udp;
-  UDPMessageTestCallback udpcallback;
 };
