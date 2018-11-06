@@ -36,7 +36,7 @@ sleep $init_time
 for i in `seq 1 2`
 do
     if [ -n "${da_proc_id[$i]}" ]; then
-	kill -USR1 "${da_proc_id[$i]}"
+	      kill -USR1 "${da_proc_id[$i]}"
     fi
 done
 
