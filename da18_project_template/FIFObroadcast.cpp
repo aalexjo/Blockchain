@@ -19,7 +19,7 @@ void *thr_receiver(void *arg) {
     for(int i = 0; i<threadListItem->n; i++){
       if (threadListItem->URB->canDeliver(i, (*threadListItem->delivered)[i]+1)){
         //TODO:deliver that shit
-        std::cout<<"d "<< i << " " << ++(*threadListItem->delivered)[i] << std::endl;
+        std::cout<<"d "<< i+1 << " " << ++(*threadListItem->delivered)[i] << std::endl;
       }
     }
   }

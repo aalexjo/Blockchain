@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 	struct msg_s msg;
 	//bzero(&msg, sizeof(msg));
 	msg.seq_nr = 0;
-	msg.sender = pid;
+	msg.sender = pid-1;
 	msg.is_ack = false;
 	msg.ack_from = 0;
 

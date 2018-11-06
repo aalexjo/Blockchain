@@ -47,7 +47,7 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   si_other.sin_family = AF_INET;
 
   //TODO: loop through all ports to send to
-  for( auto it = this->ports.begin(); it != this->ports.end(); ++it){
+  for( auto it = this->ports.begin(); it != this->ports.end(); it++){
     //printf("Sent: msg-> sender %d\n", msg->sender);
     si_other.sin_port = htons(*it);//threadListItem.port);
     if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address

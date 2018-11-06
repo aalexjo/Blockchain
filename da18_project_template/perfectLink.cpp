@@ -11,8 +11,12 @@ void *thr_broadcaster(void *arg) {
 
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
 
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 1; i++) {
   	threadListItem->udp.broadcast(threadListItem -> msg);
+    struct timespec sleep_time;
+    sleep_time.tv_sec = 0;
+    sleep_time.tv_nsec = 50;
+    nanosleep(&sleep_time, NULL);
   }
   return 0;
 }

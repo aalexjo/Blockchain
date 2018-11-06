@@ -13,19 +13,42 @@ reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): n(
 
 void reliableBroadcast::broadcast(struct msg_s* msg){
   this->forward[pid].push_back(msg->seq_nr);
-  this->ack[pid][msg->seq_nr].push_back(pid);
+  //this->ack[pid][msg->seq_nr].push_back(pid);
   link->broadcast(msg);
 }
 
 
 
 void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
-    if (msg->is_ack == true){
+  if(ack[msg->sender].find(msg->seq_nr) == ack[msg->sender].end()){//have not seen this message before
+    ack[msg->sender][msg->seq_nr] = std::vector<int>(1,pid);
+    static msg_s a = {msg->sender, msg->seq_nr, true, pid};
+    link->broadcast(&a);
+    printf("received new message from %d with seq_nr %d \n", a.sender, a.seq_nr);
+  }else{
+    if(msg->is_ack){
+      for(int i = 0; i < ack[msg->sender][msg->seq_nr].size(); i++){
+        if(ack[msg->sender][msg->seq_nr][i] == msg->ack_from){
+          printf("already acked on scr:%d sn:%d, from %d\n", msg->sender, msg->seq_nr,msg->ack_from);
+          return;
+        }
+      }
+      ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
+      printf("received acknowlagement for %d with seq_nr %d from %d\n", msg->sender, msg->seq_nr, msg->ack_from);
+
+    }
+  }
+
+
+}
+/*    if (msg->is_ack == true){
       if(ack[msg->sender][msg->seq_nr].empty()){
+        printf("here %d\n", msg->sender );
         ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
       }else{
         for( auto it = ack[msg->sender][msg->seq_nr].begin(); it != ack[msg->sender][msg->seq_nr].end(); ++it){ //lol this looks bad
           if (*it == msg->ack_from){//Have we already recived this ack before, pp2pl might redeliver
+            //printf("process %d already received ack from %d on message number %d\n",pid, msg->sender, msg->seq_nr);
             return;
           }
           ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
@@ -40,9 +63,9 @@ void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
     }
     forward[msg->sender].push_back(msg->seq_nr);
     msg->is_ack = true;
-    msg->ack_from = pid+1; //pid is 0 indexed
+    msg->ack_from = pid; //pid is 0 indexed
     link->broadcast(msg);
-}
+}*/
 
 /*
 |-this block might not be needed if FIFO broadcast ends up polling this module
@@ -64,7 +87,7 @@ bool reliableBroadcast::canDeliver(int pi_sender, int m){
   //printf("can we deliver msg: %d from sender: %d\n", m, pi_sender );
 
   if(this->ack[pi_sender].find(m) != this->ack[pi_sender].end()){
-	      if (this->ack[pi_sender][m].size() > n/2) {
+	      if (this->ack[pi_sender][m].size() > 0) {
 		     return true;
 	      }
       }
