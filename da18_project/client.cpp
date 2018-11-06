@@ -14,13 +14,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <mutex>
 
 using namespace std;
 
 #define S2SP 1
-
-mutex muFwrd;
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
@@ -53,10 +50,8 @@ void Client::bebBroadcast(msg_s msg, int sockfd) {
 
 void Client::urbBroadcast(int seq_nbr, int sockfd) {
   msg_s msg = { false, pid, seq_nbr, pid};
-  //muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
-  //muFwrd.unlock();
-  printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
+  //printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
   fprintf(fout, "b %d\n", msg.seq_nbr);
 
   // Trigger bebBroadcast
@@ -133,11 +128,9 @@ void Client::startReceiving(void) {
         // Event bebDeliver in URB
         ack[msg.creator][msg.seq_nbr][msg.src] = true;
 
-        //muFwrd.lock();
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
-          //muFwrd.unlock();
-          printf("pid:%i:FORWARD:SEND:[%i,m[%i,%i]]\n", pid, new_msg.src, new_msg.creator, new_msg.seq_nbr);
+          //printf("pid:%i:FORWARD:SEND:[%i,m[%i,%i]]\n", pid, new_msg.src, new_msg.creator, new_msg.seq_nbr);
 
           bebBroadcast(new_msg, sockfd);
 
@@ -147,7 +140,7 @@ void Client::startReceiving(void) {
         // End bebDeliver trigger in beb
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
         urbDeliverCheck(msg.creator, msg.seq_nbr);
-        printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+        //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // End pp2pDeliver
       }
 
@@ -170,23 +163,22 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
     for(int p = 0; p < process_n; p++) {
       if(ack[creator][seq_nbr][p]) {
         nbr_rdy++;
-        printf("nbr_rdy++:%i", nbr_rdy);
       }
     }
-    printf("NBR_RDY: %i\n", nbr_rdy);
+    //printf("NBR_RDY: %i\n", nbr_rdy);
 
     // Majoity Ack
     if(nbr_rdy > (process_n-1)/2) {
       //Trigger urbDeliver
-      printf("pid:%i:URB :DELV:m[%i,%i]. \n", pid, creator, seq_nbr);
+      //printf("pid:%i:URB :DELV:m[%i,%i]. \n", pid, creator, seq_nbr);
       deliveredURB[creator][seq_nbr] = true;
     }
   }
 
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver, pid, m=[creator, seq_nbr]
-    printf("FIFO:DELV:m[%i,%i].\n", creator, curr_head[creator]);
-    fprintf(fout, "d %d %d\n", seq_nbr, creator);
+    printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
+    fprintf(fout, "d %d %d\n", creator, seq_nbr);
 
     curr_head[creator]++;
   }
