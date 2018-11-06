@@ -1,4 +1,7 @@
+#pragma once
+//#include "reliableBroadcast.hpp"
 #include "UDP.hpp"
+
 #include <vector>
 #include <string>
 #include <set>
@@ -13,15 +16,16 @@ typedef struct{
   msg_s *msg;
 } perfectLinkThreadList;
 
+
 class PerfectLink{
 public:
-  PerfectLink(const char* addr, int port, perfectLinkMessageCallback callback);
+  PerfectLink(int id, std::vector<int> ports, perfectLinkMessageCallback callback);
   void broadcast(struct msg_s* msg);
   void startReceiving();
+
 private:
-  //std::vector<std::string> delivered;
-  std::vector<perfectLinkThreadList> delivered;
-  std::string processID;
-  //static void udpcallback(struct msg_s* msg);
+  static void UDPcallback(struct msg_s* msg);
   UDP udp;
+  //template<typename T>
+  void* owner;
 };

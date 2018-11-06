@@ -1,7 +1,7 @@
 #include "FIFObroadcast.hpp"
 #include <iostream>
 
-FIFObroadcast::FIFObroadcast(int n, int pid, ): URB(n), n(n), delivered(n){
+FIFObroadcast::FIFObroadcast(int n, int pid, std::vector<int> ports): URB(n, pid, ports), n(n), delivered(n){
 
 }
 

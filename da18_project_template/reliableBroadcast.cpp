@@ -1,39 +1,40 @@
 #include "reliableBroadcast.hpp"
+#include <functional>
 
-//Mostly done except delivery of message to above layer, has not been compiled and debugged yet
-
-
-reliableBroadcast::reliableBroadcast(int n): link(addr, port, pp2pCallback), forward(n), ack(n){
+reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): forward(n), ack(n){
 	this->n = n;
   seq_nr = 0;
+  link = new PerfectLink(n, ports, pp2pCallback);
+  link->startReceiving();
+
 }
 
 void reliableBroadcast::broadcast(struct msg_s* msg){
-  forward[pid].push_back(msg->seq_nr);
-  link.broadcast(msg);
+  this->forward[pid].push_back(msg->seq_nr);
+  link->broadcast(msg);
 }
 
 
 
-void pp2pCallback(struct msg_s* msg) {
+void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
     if (msg->is_ack == true){
-        for( auto it = ack[msg->src][msg->seq_nr].begin(); it != ack[msg->src][msg->seq_nr].end(); ++it){ //lol this looks bad
+        for( auto it = this->ack[msg->sender][msg->seq_nr].begin(); it != this->ack[msg->sender][msg->seq_nr].end(); ++it){ //lol this looks bad
           if (*it == msg->ack_from){//Have we already recived this ack before, pp2pl might redeliver
             return;
           }
-          ack[msg->src][msg->seq_nr].push_back(msg->ack_from);
+          this->ack[msg->sender][msg->seq_nr].push_back(msg->ack_from);
         }
     }
 
-    for(auto it = forward[msg->src].rbegin(); it != forward[msg->src].rend(); ++it){//iterate backwards because it is likly further back
-      if (*it == msg.seq_nr){//have we already acked this message?
+    for(auto it = this->forward[msg->sender].rbegin(); it != this->forward[msg->sender].rend(); ++it){//iterate backwards because it is likly further back
+      if (*it == msg->seq_nr){//have we already acked this message?
         return;
       }
     }
-    forward[msg->src].push_back(msg->seq_nr);
+    this->forward[msg->sender].push_back(msg->seq_nr);
     msg->is_ack = true;
-    msg->ack_from = pid;
-    link.broadcast(msg);
+    msg->ack_from = this->pid;
+    this->link->broadcast(msg);
 }
 
 /*
@@ -51,8 +52,8 @@ void reliableBroadcast::receiver(){
 	if (e == -1)  error("reliableBroadcast: pthread_create");
 }*/
 
-bool reliableBroadcast::canDeliver(int pi_src, int m){
-	if (ack[pi_src][m].size() > n / 2) {
+bool reliableBroadcast::canDeliver(int pi_sender, int m){
+	if (this->ack[pi_sender][m].size() > n / 2) {
 		return true;
 	}
 	return false;

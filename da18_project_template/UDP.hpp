@@ -20,7 +20,7 @@ struct msg_s{
 
 class UDP{
 public:
-  UDP(const char* ipaddr, int port, std::vector<int> ports, UDPMessageCallback callback);
+  UDP(int pid, std::vector<int> ports, UDPMessageCallback callback);
   void broadcast(struct msg_s* msg);//char const * data, int dataLength);
   void startReceiving();
 
@@ -28,6 +28,6 @@ public:
 private:
   //void *thr_listener(void* arg);
   UDPThreadList threadListItem;
-  const char* ipaddr;
+  //const char* ipaddr;
   std::vector<int> ports;
 };

@@ -28,7 +28,7 @@ void error(char const *e){
   exit(1);
 }
 
-UDP::UDP(const char* ipaddr, int pid, std::vector<int> ports, UDPMessageCallback callback): ipaddr(ipaddr), ports(ports){
+UDP::UDP(int pid, std::vector<int> ports, UDPMessageCallback callback): ports(ports){
   threadListItem = {ports[pid], callback};
 
 }
@@ -47,12 +47,13 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   si_other.sin_family = AF_INET;
 
   //TODO: loop through all ports to send to
-  for( auto it = ports.begin(); it != ports.end(), ++it){
-    si_other.sin_port = htons(*it);//threadListItem.port);
+  //for( auto it = this->ports.begin(); it != this->ports.end(); ++it){
+    //printf("Sent: msg-> sender %d\n", msg->sender);
+    si_other.sin_port = htons(threadListItem.port);
     if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
     int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
     if(e==-1)  error("udp_broadcast: sendto()");
-  }
+  //}
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
 }
 
@@ -70,7 +71,7 @@ void *thr_listener(void * arg){
 
   memset((char *) &si_me, 0, sizeof(si_me));
   si_me.sin_family = AF_INET;
-  si_me.sin_port = htons(ports[pid]);//threadListItem->port);
+  si_me.sin_port = htons(threadListItem->port);
   si_me.sin_addr.s_addr = htonl(INADDR_ANY);
   int optval = 1;
   setsockopt(s,SOL_SOCKET,SO_REUSEADDR, &optval, sizeof(optval));
@@ -81,10 +82,9 @@ void *thr_listener(void * arg){
   msg_s* msg;
   //bzero(&msg, 2* sizeof(*msg));
   msg = (msg_s*)malloc(sizeof(msg_s));
-  printf("size of msg %d \n", sizeof(*msg));
   while(1){
 
-    res = recvfrom(s, (void*)msg, 2*sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
+    res = recvfrom(s, (void*)msg, sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
     if(res >= BUFLEN-1){
       fprintf(stderr,"recvfrom: length of received message is larger than max message length: %d vs %d\n\n",res,BUFLEN);

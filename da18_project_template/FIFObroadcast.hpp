@@ -2,7 +2,7 @@
 
 class FIFObroadcast{
 public:
-  FIFObroadcast();
+  FIFObroadcast(int n, int pid, std::vector<int> ports);
 
   void broadcast(struct msg_s* msg);
   void startReceiving();
@@ -13,4 +13,4 @@ private:
   int pid;
   std::vector<int> delivered;
 
-}
+};

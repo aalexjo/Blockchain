@@ -1,15 +1,8 @@
+#pragma once
 #include "perfectLink.hpp"
 #include <vector>
 #include <string>
 #include <map>
-
-//typedef void(*RBMessageCallback)(const char *ip, char *data, int datalength);
-
-
-typedef struct {
-	int port;
-	RBMessageCallback callback;
-} RBThreadList;
 
 class reliableBroadcast{
 public:
@@ -17,17 +10,15 @@ public:
 
   void broadcast(struct msg_s* msg);
   void receiver();
-  bool canDeliver(int pi_src. int m);
+  bool canDeliver(int pi_sender, int m);
 
 private:
-	void pp2pCallback(struct msg_s* msg);
+	static void pp2pCallback(struct msg_s* msg);
 	int n; //num of Procsess
   int pid;
-	perfectLink link;
+	PerfectLink* link;
 	unsigned int seq_nr;
 	std::vector<msg_s> delivered;
-	std::vector<vector<int>> forward;
-	std::vector<std::map<int, vector<int>>> ack; //ack[src_pi][seq_nr][acking_pi]
-
-
-}
+	std::vector<std::vector<int>> forward;
+	std::vector<std::map<int, std::vector<int>>> ack; //ack[src_pi][seq_nr][acking_pi]
+};

@@ -2,7 +2,13 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
+#include <cassert>
+#include <fstream>
+#include "reliableBroadcast.hpp"
 #include "perfectLink.hpp"
+
+using namespace std;
+
 
 static int wait_for_start = 0;
 //static int pNumber, msgNum;
@@ -35,11 +41,11 @@ static void stop(int signum) {
 	exit(0);
 }
 
-void perfectLinkTestCallback(const char * ip, char * data, int datalength) {
+void perfectLinkTestCallback(struct msg_s* msg) {
 	// Assuming an ascii string here - a binary blob (including '0's) will
   // be ugly/truncated.
 	// printf("Received perfectLink message from %s: '%s'\n", ip, data);
-	printf("Perfect link recived");
+	printf("Perfect link recived from %d with seq_nr: %d  \n" , msg->sender, msg->seq_nr);
 	// return std::make_tuple()
 }
 
@@ -50,26 +56,41 @@ int main(int argc, char** argv) {
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 
-/*
-	//parse command line arguments
-	if (argc < 3){
-		printf("too few arguments\n" );
-		exit(0);
-	}
-	pNumber = atoi(argv[0]);
-	membership = argv[1];
-	msgNum = atoi(argv[2]);
-*/
-	char const *addr = "127.0.0.1";
-	int port = 1729;
 	//parse arguments, including membership
+  assert(argc >= 3);
+  int pid = atoi(argv[1]);
+  char* file_name = argv[2];
+//  int message_n = atoi(argv[3]);
+
+	printf("file_name %s\n", file_name);
+
+
+  //parse membership
+  fstream  membership;
+  int id, port;
+  string ip;
+
+  int process_n;
+  vector <int> ids;
+  vector <string> ips;
+  vector <int> ports;
+  membership.open(file_name, ios::in);
+  membership >> process_n;
+
+  while(membership >> id >> ip >> port) {
+    ids.push_back(id);
+    ips.push_back(ip);
+    ports.push_back(port);
+  }
+	membership.close();
+
 	//initialize application
-	//start listening for incoming UDP packets
+
 	printf("Initializing.\n");
-	//member file
-	//buffer
-	perfectLink perfectLinkReceive(addrR, portR, perfectLinkTestCallback);
-	perfectLinkReceive.startReceiving();
+	printf("port %d, pid: %d", ports[pid],pid);
+
+	//PerfectLink perfectLink(pid, ports, perfectLinkTestCallback);
+	//perfectLink.startReceiving();
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -81,7 +102,7 @@ int main(int argc, char** argv) {
 
 	struct msg_s msg;
 	//bzero(&msg, sizeof(msg));
-	msg.seq_nr = 4;
+	msg.seq_nr = 0;
 	msg.sender = 8;
 	msg.is_ack = false;
 	msg.ack_from = 0;
@@ -92,7 +113,7 @@ int main(int argc, char** argv) {
 	//wait until stopped
 	while(1) {
 		msg.seq_nr = msg.seq_nr + 1;
-		udp.broadcast(&msg);//"hallo all",10 );
+		//perfectLink.broadcast(&msg);//"hallo all",10 );
 		struct timespec sleep_time;
 		sleep_time.tv_sec = 1;
 		sleep_time.tv_nsec = 0;
