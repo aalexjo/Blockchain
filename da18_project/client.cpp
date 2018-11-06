@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define S2SP 1
+#define S2SP 10
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
@@ -84,6 +84,10 @@ void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
       perror("cannot send message");
       exit(1);
     }
+		struct timespec sleep_time;
+		sleep_time.tv_sec = 0;
+		sleep_time.tv_nsec = 200;
+		nanosleep(&sleep_time, NULL);
   }
 }
 
@@ -177,7 +181,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
 
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver, pid, m=[creator, seq_nbr]
-    printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
+    //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
     fprintf(fout, "d %d %d\n", creator, seq_nbr);
 
     curr_head[creator]++;

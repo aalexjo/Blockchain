@@ -8,9 +8,9 @@
 
 # time to wait for correct processes to broadcast all messages (in seconds)
 # (should be adapted to the number of messages to send)
-time_to_finish=2
+time_to_finish=30
 
-init_time=2
+init_time=10
 
 # configure lossy network simulation
 sudo tc qdisc change dev lo root netem delay 50ms 200ms loss 10% 25% reorder 25% 50%
@@ -28,7 +28,7 @@ echo "5
 # start 5 processes, each broadcasting 100 messages
 for i in `seq 1 5`
 do
-    ./da_proc $i membership 100 &
+    ./da_proc $i membership 30 &
     da_proc_id[$i]=$!
 done
 
@@ -47,7 +47,7 @@ kill -CONT "${da_proc_id[3]}" # resume process 3
 for i in `seq 1 5`
 do
     if [ -n "${da_proc_id[$i]}" ]; then
-	kill -USR2 "${da_proc_id[$i]}"
+	kill -USR1 "${da_proc_id[$i]}"
     fi
 done
 
