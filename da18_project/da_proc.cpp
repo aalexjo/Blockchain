@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <thread>
 #include "client.hpp"
 
 using namespace std;
@@ -64,13 +65,13 @@ int main(int argc, char** argv) {
     ports.push_back(port);
   }
   membership.close();
-	//initialize application
 
+	//initialize application
   Client client(process_i, process_n, message_n, ids, ips, ports);
-  struct req myReq;
   client.display();
+  thread receiveMsgs(&Client::startReceiving, client);
   client.broadcast();
-  client.recvfrom_req_udp(&myReq);
+  client.broadcast();
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
 
