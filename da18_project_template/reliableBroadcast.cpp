@@ -3,7 +3,7 @@
 //Mostly done except delivery of message to above layer, has not been compiled and debugged yet
 
 
-reliableBroadcast::reliableBroadcast(int n): link(addr, port, pp2pCallback), forward(n){
+reliableBroadcast::reliableBroadcast(int n): link(addr, port, pp2pCallback), forward(n), ack(n){
 	this->n = n;
   seq_nr = 0;
 }
@@ -17,11 +17,11 @@ void reliableBroadcast::broadcast(struct msg_s* msg){
 
 void pp2pCallback(struct msg_s* msg) {
     if (msg->is_ack == true){
-        for( auto it = ack[msg->seq_nr].begin(); it != ack[msg->seq_nr].end(); ++it){
-          if (*it == msg->ack_from){//Have we already recived this ack?
+        for( auto it = ack[msg->src][msg->seq_nr].begin(); it != ack[msg->src][msg->seq_nr].end(); ++it){ //lol this looks bad
+          if (*it == msg->ack_from){//Have we already recived this ack before, pp2pl might redeliver
             return;
           }
-          ack[msg->seq_nr].push_back(msg->ack_from);
+          ack[msg->src][msg->seq_nr].push_back(msg->ack_from);
         }
     }
 
@@ -51,8 +51,8 @@ void reliableBroadcast::receiver(){
 	if (e == -1)  error("reliableBroadcast: pthread_create");
 }*/
 
-bool reliableBroadcast::canDeliver(unsigned int m){
-	if (ack[m].size() > n / 2) {
+bool reliableBroadcast::canDeliver(int pi_src, int m){
+	if (ack[pi_src][m].size() > n / 2) {
 		return true;
 	}
 	return false;
