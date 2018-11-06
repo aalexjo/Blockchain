@@ -24,11 +24,13 @@ private :
   vector <int> id;
   vector <string> ips;
   vector <int> ports;
-  vector< vector< vector<bool> > > deliveredPL, deliveredURB, ack;
-  vector< vector< bool>  > forwarded;
+  vector< vector< vector<bool> > > deliveredPL, ack;
+  vector< vector< bool>  > forwarded, deliveredURB;
+  vector<int> curr_head;
   void bebBroadcast(msg_s msg, int sockfd);
   void urbBroadcast(int seq_nbr, int sockfd);
   void sendto_udp(msg_s msg, int dst, int sockfd);
+  void urbDeliverCheck(int creator, int seq_nbr);
 
 public :
   Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports);
