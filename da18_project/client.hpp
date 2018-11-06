@@ -32,5 +32,5 @@ public :
   void display(void);
   void startReceiving(void);
   void broadcast(void);
-  void sendto_req_udp(int dest_p, int sockfd);
+  void sendto_req_udp(int dest_p, int sockfd, Layer layer);
 };

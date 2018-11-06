@@ -17,9 +17,8 @@
 using namespace std;
 
 Client::Client(int process_i, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
-: process_i(process_i), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
+  : process_i(process_i), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
   delivered = vector<vector<int>>(process_n, vector<int>(0));
-  seq_nbr = 5;
 }
 
 void Client::display(void) {
@@ -39,16 +38,17 @@ void Client::broadcast(void) {
     exit(1);
   }
   for(int p = 0; p < process_n; p++) {
-    sendto_req_udp(p, sockfd);
+    sendto_req_udp(p, sockfd, BEB);
   }
   seq_nbr += 1;
 }
 
-void Client::sendto_req_udp(int dst, int sockfd) {
+void Client::sendto_req_udp(int dst, int sockfd, Layer layer) {
   struct req req_;
   req_.dst = dst;
   req_.src = process_i;
   req_.seq_nbr = seq_nbr;
+  req_.layer = layer;
 
   sockaddr_in dest_addr;
   bzero(&dest_addr,sizeof(dest_addr));
@@ -56,11 +56,12 @@ void Client::sendto_req_udp(int dst, int sockfd) {
   dest_addr.sin_addr.s_addr = inet_addr(ips[dst].c_str());
   dest_addr.sin_port = htons(ports[dst]);
 
-  if (sendto(sockfd, (void* ) &req_, sizeof(&req_), 0, (const sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
+  //printf("TX:%u:%u->%u:%i\n", req_.layer, req_.src, req_.dst, req_.seq_nbr);
+  cout << "TX:" << req_.layer << ":" << req_.src << "->" << req_.dst << ":" << req_.seq_nbr << '\n';
+  if (sendto(sockfd, (void* ) &req_, sizeof(req_), 0, (const sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
     perror("cannot send message");
     exit(1);
   }
-  cout << "TX:" << req_.src << "->" << req_.dst << ":" << req_.seq_nbr << '\n';
 }
 
 void Client::startReceiving(void) {
@@ -84,10 +85,10 @@ void Client::startReceiving(void) {
   }
 
   while (1) {
-    if (recvfrom(sockfd, (void *) &req_, sizeof(&req_), 0, (sockaddr*) &src_addr, &addrlen) == -1) {
+    if (recvfrom(sockfd, (void *) &req_, sizeof(req_), 0, (sockaddr*) &src_addr, &addrlen) == -1) {
       perror("cannot receive message");
       exit(1);
     }
-    cout << "RX:" << req_.src << "->" << req_.dst << ":" << req_.seq_nbr << '\n';
+    cout << "RX:" << req_.layer << ":" << req_.src << "->" << req_.dst << ":" << req_.seq_nbr << '\n';
   }
 }
