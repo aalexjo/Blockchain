@@ -133,6 +133,8 @@ void Client::startReceiving(void) {
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           printf("RESV:m[%i,%i]:%i  | ack:%i\n", msg.creator, msg.seq_nbr, msg.src, msg.is_ack);
           printf("SEND:m[%i,%i]:%i  | ack:%i\n", new_msg.creator, new_msg.seq_nbr, new_msg.src, new_msg.is_ack);
+
+          forwarded[msg.creator][msg.seq_nbr] = true;
           bebBroadcast(new_msg, sockfd);
 
           // Trigger URB check for Delivery
