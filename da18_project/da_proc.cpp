@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
 	//parse arguments, including membership
   //assert(argc == 4);
-  int process_i = atoi(argv[1]);
+  int process_i = atoi(argv[1]) - 1;
   char* file_name = argv[2];
   int message_n = atoi(argv[3]);
 

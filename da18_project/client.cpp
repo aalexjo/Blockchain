@@ -20,7 +20,7 @@ using namespace std;
 
 #define S2SP 1
 
-static mutex muFwrd;
+mutex muFwrd;
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
@@ -52,13 +52,8 @@ void Client::urbBroadcast(int seq_nbr, int sockfd) {
   msg_s msg = { false, pid, seq_nbr, pid};
   muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
-  for(int p = 0; p < process_n; p++)
-    for(int m = 0; m < message_n; m++) {
-      bool is_forwarded = forwarded[p][m];
-      printf("[%i][%i]:%i\n", p, m, is_forwarded);
-    }
   muFwrd.unlock();
-  printf("SEND:m[%i,%i]:%i  | ack:%i\n", msg.creator, msg.seq_nbr, msg.src, msg.is_ack);
+  printf("BROADCAST:SEND:%i:m[%i,%i]\n", msg.src, msg.creator, msg.seq_nbr);
 
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
@@ -135,16 +130,13 @@ void Client::startReceiving(void) {
         ack[msg.creator][msg.seq_nbr][msg.src] = true;
 
         muFwrd.lock();
-        for(int p = 0; p < process_n; p++)
-          for(int m = 0; m < message_n; m++) {
-            bool is_forwarded = forwarded[p][m];
-            printf("[%i][%i]:%i\n", p, m, is_forwarded);
-          }
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
           muFwrd.unlock();
-          printf("RESV:m[%i,%i]:%i  | ack:%i\n", msg.creator, msg.seq_nbr, msg.src, msg.is_ack);
-          printf("SEND:m[%i,%i]:%i  | ack:%i\n", new_msg.creator, new_msg.seq_nbr, new_msg.src, new_msg.is_ack);
+          printf("FORWARD  :SEND:%i:m[%i,%i]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
+          //printf("RESV:%i:m[%i,%i]\n", msg.src    , msg.creator,     msg.seq_nbr);
+          //printf("SEND:%i:m[%i,%i]\n", new_msg.src, new_msg.creator, new_msg.seq_nbr);
+          //printf("\n");
 
           bebBroadcast(new_msg, sockfd);
 
