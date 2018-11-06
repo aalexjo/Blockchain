@@ -80,7 +80,6 @@ int main(int argc, char** argv) {
 		sleep_time.tv_sec = 2;
 		sleep_time.tv_nsec = 1000;
 		nanosleep(&sleep_time, NULL);
-    wait_for_start = 0;
 	}
 
 	//broadcast messages
