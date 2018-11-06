@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
-  thread receiveMsgs(&Client::startReceiving, client);
+  thread receiveMsgs(&Client::startReceiving, &client);
 
 	//wait until start signal
 	while(wait_for_start) {
