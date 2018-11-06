@@ -56,13 +56,9 @@ void Client::urbBroadcast(int seq_nbr, int sockfd) {
   //muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
   //muFwrd.unlock();
-<<<<<<< HEAD
   printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
   fprintf(fout, "b %d\n", msg.seq_nbr);
-=======
-  printf("pid:%i:BROADCAST:SEND:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
 
->>>>>>> 91d7993be7a3a92e52aef8f4f677842cd1e08c1d
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
 }
