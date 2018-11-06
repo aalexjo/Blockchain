@@ -16,13 +16,19 @@
 
 using namespace std;
 
-#define S2SP 5
+#define S2SP 1
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
   deliveredPL = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   deliveredURB = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
   forwarded    = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
+  for(int p = 0; p < process_n; p++)
+    for(int m = 0; m < message_n; m++) {
+      bool is_forwarded = forwarded[p][m];
+      printf("[%i][%i]:%i\n", p, m, is_forwarded);
+    }
+
   ack = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   curr_head = vector<int>(process_n, 0);
 }
@@ -45,8 +51,8 @@ void Client::bebBroadcast(msg_s msg, int sockfd) {
 }
 
 void Client::urbBroadcast(int seq_nbr, int sockfd) {
-  forwarded[pid][seq_nbr] = true;
   msg_s msg = { false, pid, seq_nbr, pid};
+  forwarded[msg.creator][msg.seq_nbr] = true;
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
 }
@@ -67,13 +73,12 @@ void Client::broadcastMessages(void) {
 }
 
 void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
-  printf("Sending UDP\n");
   sockaddr_in dest_addr;
   bzero(&dest_addr,sizeof(dest_addr));
   dest_addr.sin_family = AF_INET;
   dest_addr.sin_addr.s_addr = inet_addr(ips[dst].c_str());
   dest_addr.sin_port = htons(ports[dst]);
-  for(int i; i < S2SP; i++)  {
+  for(int i = 0; i < S2SP; i++)  {
     if (sendto(sockfd, (void* ) &msg, sizeof(msg), 0, (const sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
       perror("cannot send message");
       exit(1);
@@ -84,7 +89,7 @@ void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
 void Client::startReceiving(void) {
   struct msg_s msg;
   sockaddr_in src_addr;
-  socklen_t addrlen;
+  socklen_t addrlen = sizeof(src_addr);
 
   int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sockfd == -1){
@@ -102,15 +107,13 @@ void Client::startReceiving(void) {
   }
 
   while (1) {
-    printf("Waiting for UDP");
-    if (recvfrom(sockfd, (void *) &msg, sizeof(msg), 0, (sockaddr*) &src_addr, &addrlen) == -1) {
+    if (recvfrom(sockfd, (void *) &msg, sizeof(msg), 0, (sockaddr*) &src_addr, (socklen_t *) &addrlen) == -1) {
       perror("cannot receive message");
       exit(1);
     }
-    printf("Receiving UDP\n");
-
     // Trigger flp2Deliver
     // Trigger sp2pDeliver
+    // Event sp2pDeliver in pp2pDeliver
     if(!msg.is_ack) {
       msg_s new_msg;
       memcpy(&new_msg, &msg, sizeof(msg));
@@ -118,27 +121,32 @@ void Client::startReceiving(void) {
 
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
         // Trigger pp2pDeliver
+        // Event pp2pDeliver in bebDeliver
         // Trigger bebDeliver
-        printf("beb delivered");
+        // Event bebDeliver in URB
         ack[msg.creator][msg.seq_nbr][msg.src] = true;
+        for(int p = 0; p < process_n; p++)
+          for(int m = 0; m < message_n; m++) {
+            bool is_forwarded = forwarded[p][m];
+            printf("[%i][%i]:%i\n", p, m, is_forwarded);
+          }
         if(!forwarded[msg.creator][msg.seq_nbr]) {
-          forwarded[msg.creator][msg.seq_nbr] = true;
-          // Trigger bebBroadcast
-          printf("forwarding");
-         bebBroadcast(new_msg, sockfd);
+          printf("RESV:m[%i,%i]:%i  | ack:%i\n", msg.creator, msg.seq_nbr, msg.src, msg.is_ack);
+          printf("SEND:m[%i,%i]:%i  | ack:%i\n", new_msg.creator, new_msg.seq_nbr, new_msg.src, new_msg.is_ack);
+          bebBroadcast(new_msg, sockfd);
 
           // Trigger URB check for Delivery
           urbDeliverCheck(msg.creator, msg.seq_nbr);
         }
-
-        // End bebDeliver
+        // End bebDeliver trigger in URB
+        // End bebDeliver trigger in beb
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
         // End pp2pDeliver
       }
 
       // Ack
       new_msg.is_ack = true;
-      if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (sockaddr*) &src_addr, addrlen) == -1) {
+      if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
         perror("cannot send message");
         exit(1);
       }
@@ -161,6 +169,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
     // Majoity Ack
     if(nbr_rdy > process_n/2) {
       //Trigger urbDeliver
+      printf("URB:p(%i):%i. \n", creator, seq_nbr);
       deliveredURB[creator][seq_nbr] = true;
     }
   }

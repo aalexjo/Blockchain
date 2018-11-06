@@ -25,7 +25,7 @@ private :
   vector <string> ips;
   vector <int> ports;
   vector< vector< vector<bool> > > deliveredPL, ack;
-  vector< vector< bool>  > forwarded, deliveredURB;
+  vector< vector< bool >  > forwarded, deliveredURB;
   vector<int> curr_head;
   void bebBroadcast(msg_s msg, int sockfd);
   void urbBroadcast(int seq_nbr, int sockfd);
