@@ -9,26 +9,24 @@
 #include <stdlib.h>
 
 #include "client.hpp"
+#include <mutex>
 #include <cassert>
 #include <iostream>
 #include <vector>
 #include <string>
+#include <mutex>
 
 using namespace std;
 
 #define S2SP 1
+
+static mutex muFwrd;
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
   deliveredPL = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   deliveredURB = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
   forwarded    = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
-  for(int p = 0; p < process_n; p++)
-    for(int m = 0; m < message_n; m++) {
-      bool is_forwarded = forwarded[p][m];
-      printf("[%i][%i]:%i\n", p, m, is_forwarded);
-    }
-
   ack = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   curr_head = vector<int>(process_n, 0);
 }
@@ -52,7 +50,16 @@ void Client::bebBroadcast(msg_s msg, int sockfd) {
 
 void Client::urbBroadcast(int seq_nbr, int sockfd) {
   msg_s msg = { false, pid, seq_nbr, pid};
+  muFwrd.lock();
   forwarded[msg.creator][msg.seq_nbr] = true;
+  for(int p = 0; p < process_n; p++)
+    for(int m = 0; m < message_n; m++) {
+      bool is_forwarded = forwarded[p][m];
+      printf("[%i][%i]:%i\n", p, m, is_forwarded);
+    }
+  muFwrd.unlock();
+  printf("SEND:m[%i,%i]:%i  | ack:%i\n", msg.creator, msg.seq_nbr, msg.src, msg.is_ack);
+
   // Trigger bebBroadcast
   bebBroadcast(msg, sockfd);
 }
@@ -119,23 +126,28 @@ void Client::startReceiving(void) {
       memcpy(&new_msg, &msg, sizeof(msg));
       new_msg.src = pid;
 
+
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
         // Trigger pp2pDeliver
         // Event pp2pDeliver in bebDeliver
         // Trigger bebDeliver
         // Event bebDeliver in URB
         ack[msg.creator][msg.seq_nbr][msg.src] = true;
+
+        muFwrd.lock();
         for(int p = 0; p < process_n; p++)
           for(int m = 0; m < message_n; m++) {
             bool is_forwarded = forwarded[p][m];
             printf("[%i][%i]:%i\n", p, m, is_forwarded);
           }
         if(!forwarded[msg.creator][msg.seq_nbr]) {
+          forwarded[msg.creator][msg.seq_nbr] = true;
+          muFwrd.unlock();
           printf("RESV:m[%i,%i]:%i  | ack:%i\n", msg.creator, msg.seq_nbr, msg.src, msg.is_ack);
           printf("SEND:m[%i,%i]:%i  | ack:%i\n", new_msg.creator, new_msg.seq_nbr, new_msg.src, new_msg.is_ack);
 
-          forwarded[msg.creator][msg.seq_nbr] = true;
           bebBroadcast(new_msg, sockfd);
+
 
           // Trigger URB check for Delivery
           urbDeliverCheck(msg.creator, msg.seq_nbr);
