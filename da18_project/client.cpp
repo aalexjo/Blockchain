@@ -54,7 +54,7 @@ void Client::bebBroadcast(msg_s msg) {
 
   for(int dst = 0; dst < process_n; dst++) {
     // Trigger PP2PSend
-    if(ackDone[dst] && !done[dst])
+    //if(ackDone[dst] && !done[dst])
       sendto_udp(msg, dst, sockfd);
   }
   close(sockfd);
@@ -71,21 +71,13 @@ void Client::urbBroadcast(int seq_nbr) {
 }
 
 void Client::broadcastMessages(void) {
+  /*
   int done_cnt = 0;
   struct timespec timeout;
   while(done_cnt != process_n) {
     done_cnt = 0;
-    int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(sockfd == -1){
-      perror("cannot open socket");
-      exit(1);
-    }
-    for(int dst = 0; dst < process_n; dst++) {
-      msg_s msg = { isDoneReq, pid, seq_nbr, pid, false};
-      // Trigger PP2PSend
-      sendto_udp(msg, dst, sockfd);
-    }
-    close(sockfd);
+    msg_s msg = { isDoneReq, pid, seq_nbr, pid, false};
+    bebBroadcast(msg);
 
 		timeout.tv_sec = 0;
 		timeout.tv_nsec = 100;
@@ -93,12 +85,14 @@ void Client::broadcastMessages(void) {
     for(int p = 0; p < process_n; p++) {
       if(ackDone[p]) printf("done:%i", p);
     }
+    // */
     for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
       // Trigger urbBroadcast
       urbBroadcast(seq_nbr);
     }
 
-		timeout.tv_sec = 2;
+	  /*
+    timeout.tv_sec = 2;
 		timeout.tv_nsec = 0;
 		nanosleep(&timeout, NULL);
     for(int p = 0; p < process_n; p++) {
@@ -107,6 +101,7 @@ void Client::broadcastMessages(void) {
       if(done[p]) printf("done:%i", p);
     }
   }
+  // */
 }
 
 void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
@@ -155,11 +150,9 @@ void Client::startReceiving(void) {
 
     switch(msg.type) {
     case isMsg:
-      printf("msg.type:isMsg\n");
       // Trigger sp2pDeliver
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
         // Trigger pp2pDeliver
-        printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
         // Trigger bebDeliver
         ackURB[msg.creator][msg.seq_nbr][msg.src] = true;
@@ -189,7 +182,6 @@ void Client::startReceiving(void) {
       }
       break;
     case isMsgAck:
-      printf("msg.type:isMsgAck\n");
       ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
       break;
     case isDoneReq:
