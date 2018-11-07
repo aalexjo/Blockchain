@@ -62,7 +62,7 @@ void Client::urbBroadcast(int seq_nbr) {
   msg_s msg = { false, pid, seq_nbr, pid};
   forwarded[msg.creator][msg.seq_nbr] = true;
   //printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
-  //fprintf(fout, "b %d\n", msg.seq_nbr);
+  fprintf(fout, "b %d\n", msg.seq_nbr);
 
   // Trigger bebBroadcast
   bebBroadcast(msg);
@@ -125,7 +125,7 @@ void Client::startReceiving(void) {
       // Trigger sp2pDeliver
       // Event sp2pDeliver in pp2pDeliver
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
-        fprintf(fout, "pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+        //fprintf(fout, "pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // Trigger pp2pDeliver
         //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
@@ -184,7 +184,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver
     //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
-    //fprintf(fout, "d %d %d\n", creator, seq_nbr);
+    fprintf(fout, "d %d %d\n", creator, seq_nbr);
     curr_head[creator]++;
   }
 }
