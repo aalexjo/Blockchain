@@ -24,7 +24,8 @@ Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <s
   deliveredPL = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   deliveredURB = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
   forwarded    = vector<vector<bool>>(process_n, vector<bool>(message_n, false));
-  ack = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
+  ackPL = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
+  ackURB = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   curr_head = vector<int>(process_n, 0);
   string fname = "da_proc_" + to_string(pid) + ".txt";
   fout = fopen(fname.c_str(), "w+");
@@ -84,10 +85,10 @@ void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
       perror("cannot send message");
       exit(1);
     }
-		struct timespec sleep_time;
-		sleep_time.tv_sec = 0;
-		sleep_time.tv_nsec = 200;
-		nanosleep(&sleep_time, NULL);
+		struct timespec timeout;
+		timeout.tv_sec = 0;
+		timeout.tv_nsec = 200;
+		nanosleep(&timeout, NULL);
   }
 }
 
@@ -116,21 +117,21 @@ void Client::startReceiving(void) {
       perror("cannot receive message");
       exit(1);
     }
+
+    msg_s new_msg;
+    memcpy(&new_msg, &msg, sizeof(msg));
+    new_msg.src = pid;
+
     // Trigger flp2Deliver
     // Trigger sp2pDeliver
     // Event sp2pDeliver in pp2pDeliver
     if(!msg.is_ack) {
-      msg_s new_msg;
-      memcpy(&new_msg, &msg, sizeof(msg));
-      new_msg.src = pid;
-
-
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
         // Trigger pp2pDeliver
         // Event pp2pDeliver in bebDeliver
         // Trigger bebDeliver
         // Event bebDeliver in URB
-        ack[msg.creator][msg.seq_nbr][msg.src] = true;
+        ackURB[msg.creator][msg.seq_nbr][msg.src] = true;
 
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
@@ -147,13 +148,15 @@ void Client::startReceiving(void) {
         //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // End pp2pDeliver
       }
+    } else if (msg.is_ack) {
+      printf("pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+      ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
+    }
 
-      // Ack
-      new_msg.is_ack = true;
-      if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
-        perror("cannot send message");
-        exit(1);
-      }
+    new_msg.is_ack = true;
+    if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
+      perror("cannot send message");
+      exit(1);
     }
     // End sp2pDeliver
     // End flp2Deliver
@@ -165,7 +168,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
   int nbr_rdy = 0;
   if (!deliveredURB[creator][seq_nbr]) {
     for(int p = 0; p < process_n; p++) {
-      if(ack[creator][seq_nbr][p]) {
+      if(ackURB[creator][seq_nbr][p]) {
         nbr_rdy++;
       }
     }
@@ -181,9 +184,8 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
 
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver, pid, m=[creator, seq_nbr]
-    //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
+    printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
     fprintf(fout, "d %d %d\n", creator, seq_nbr);
-
     curr_head[creator]++;
   }
 }
