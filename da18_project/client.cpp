@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define S2SP 2
+#define S2SP 1
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
@@ -181,10 +181,11 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
     }
   }
 
-  while(deliveredURB[creator][curr_head[creator]]) {
+  while(deliveredURB[creator][curr_head[creator]] && curr_head[creator] != message_n) {
     // Trigger FIFODeliver
     //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
-    fprintf(fout, "d %d %d\n", creator, seq_nbr);
+    int m_nbr = curr_head[creator];
+    fprintf(fout, "d %d %d\n", creator, m_nbr);
     curr_head[creator]++;
   }
 }
