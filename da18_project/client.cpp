@@ -140,7 +140,8 @@ void Client::startReceiving(void) {
           msg_s new_msg;
           memcpy(&new_msg, &msg, sizeof(msg));
           new_msg.src = pid;
-          bebBroadcast(new_msg);
+          thread t(&Client::bebBroadcast, this, new_msg);
+          t.detach();
         }
         urbDeliverCheck(msg.creator, msg.seq_nbr);
         // End bebDeliver trigger in URB
