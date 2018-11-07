@@ -7,11 +7,14 @@
 #include <cstdio>
 using namespace std;
 
+enum msg_t {isMsg, isMsgAck, isDoneReq, isDoneAck};
+
 struct msg_s {
-  bool is_ack;
+  msg_t type;
   int creator;
   int seq_nbr;
   int src;
+  bool done;
 };
 
 class Client {
@@ -27,6 +30,7 @@ private :
   vector< vector< vector<bool> > > deliveredPL, ackURB, ackPL;
   vector< vector< bool >  > forwarded, deliveredURB;
   vector<int> curr_head;
+  vector<bool> done, ackDone;
   void bebBroadcast(msg_s msg);
   void urbBroadcast(int seq_nbr);
   void sendto_udp(msg_s msg, int dst, int sockfd);

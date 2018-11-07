@@ -28,6 +28,8 @@ Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <s
   ackPL = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   ackURB = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   curr_head = vector<int>(process_n, 0);
+  done = vector<bool>(process_n, false);
+  ackDone = vector<bool>(process_n, false);
   string fname = "da_proc_" + to_string(pid+1) + ".out";
   fout = fopen(fname.c_str(), "w+");
 
@@ -52,14 +54,14 @@ void Client::bebBroadcast(msg_s msg) {
 
   for(int dst = 0; dst < process_n; dst++) {
     // Trigger PP2PSend
-    sendto_udp(msg, dst, sockfd);
+    if(ackDone[dst] && !done[dst])
+      sendto_udp(msg, dst, sockfd);
   }
-
   close(sockfd);
 }
 
 void Client::urbBroadcast(int seq_nbr) {
-  msg_s msg = { false, pid, seq_nbr, pid};
+  msg_s msg = { isMsg, pid, seq_nbr, pid, false};
   forwarded[msg.creator][msg.seq_nbr] = true;
   //printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
   fprintf(fout, "b %d\n", msg.seq_nbr+1);
@@ -69,11 +71,42 @@ void Client::urbBroadcast(int seq_nbr) {
 }
 
 void Client::broadcastMessages(void) {
-  for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
-    // Trigger urbBroadcast
-    urbBroadcast(seq_nbr);
-  }
+  int done_cnt = 0;
+  struct timespec timeout;
+  while(done_cnt != process_n) {
+    done_cnt = 0;
+    int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(sockfd == -1){
+      perror("cannot open socket");
+      exit(1);
+    }
+    for(int dst = 0; dst < process_n; dst++) {
+      msg_s msg = { isDoneReq, pid, seq_nbr, pid, false};
+      // Trigger PP2PSend
+      sendto_udp(msg, dst, sockfd);
+    }
+    close(sockfd);
 
+		timeout.tv_sec = 0;
+		timeout.tv_nsec = 100;
+		nanosleep(&timeout, NULL);
+    for(int p = 0; p < process_n; p++) {
+      if(ackDone[p]) printf("done:%i", p);
+    }
+    for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
+      // Trigger urbBroadcast
+      urbBroadcast(seq_nbr);
+    }
+
+		timeout.tv_sec = 2;
+		timeout.tv_nsec = 0;
+		nanosleep(&timeout, NULL);
+    for(int p = 0; p < process_n; p++) {
+      ackDone[p] = false;
+      if(done[p]) done_cnt++;
+      if(done[p]) printf("done:%i", p);
+    }
+  }
 }
 
 void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
@@ -120,44 +153,59 @@ void Client::startReceiving(void) {
       exit(1);
     }
 
-    if(!msg.is_ack) {
-      // Trigger flp2Deliver
+    switch(msg.type) {
+    case isMsg:
+      printf("msg.type:isMsg\n");
       // Trigger sp2pDeliver
-      // Event sp2pDeliver in pp2pDeliver
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
-        //fprintf(fout, "pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // Trigger pp2pDeliver
-        //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+        printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
-        // Event pp2pDeliver in bebDeliver
         // Trigger bebDeliver
-        // Event bebDeliver in URB
         ackURB[msg.creator][msg.seq_nbr][msg.src] = true;
-
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
           //printf("pid:%i:FORWARD:SEND:[%i,m[%i,%i]]\n", pid, new_msg.src, new_msg.creator, new_msg.seq_nbr);
-          msg_s new_msg;
-          memcpy(&new_msg, &msg, sizeof(msg));
-          new_msg.src = pid;
+          msg_s new_msg = { isMsg, msg.creator, msg.seq_nbr, pid, false };
           thread t(&Client::bebBroadcast, this, new_msg);
           t.detach();
         }
         urbDeliverCheck(msg.creator, msg.seq_nbr);
-        // End bebDeliver trigger in URB
-        // End pp2pDeliver
+        if (curr_head[msg.creator] == message_n) {
+          msg_s new_msg;
+          new_msg = { isDoneAck, msg.creator, 0, pid, true };
+          sendto_udp(new_msg, msg.creator, sockfd);
+        }
+        // End bebDeliver Trigger
+        // End pp2pDeliver Trigger
       }
-      // End sp2pDeliver
-      // End flp2Deliver
+      // End sp2pDeliver Trigger
 
-      msg.is_ack = true;
+      // Ack
+      msg.type = isMsgAck;
       if (sendto(sockfd, (void* ) &msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
         perror("cannot send message");
         exit(1);
       }
-    } else if (msg.is_ack && !ackPL[msg.creator][msg.seq_nbr][msg.src]) { // Second for less priting
-      //fprintf(fout, "pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+      break;
+    case isMsgAck:
+      printf("msg.type:isMsgAck\n");
       ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
+      break;
+    case isDoneReq:
+      printf("msg.type:isDoneReq\n");
+      msg_s new_msg;
+      new_msg = { isDoneAck, msg.creator, 0, pid, (curr_head[msg.creator] == message_n)};
+      if (sendto(sockfd, (void* ) &new_msg, sizeof(new_msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
+        perror("cannot send message");
+        exit(1);
+      }
+      break;
+    case isDoneAck:
+      printf("msg.type:isDoneAck\n");
+      ackDone[msg.src] = true;
+      done[msg.src] = msg.done;
+      break;
     }
   }
 }
