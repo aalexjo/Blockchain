@@ -122,10 +122,10 @@ void Client::startReceiving(void) {
     memcpy(&new_msg, &msg, sizeof(msg));
     new_msg.src = pid;
 
-    // Trigger flp2Deliver
-    // Trigger sp2pDeliver
-    // Event sp2pDeliver in pp2pDeliver
     if(!msg.is_ack) {
+      // Trigger flp2Deliver
+      // Trigger sp2pDeliver
+      // Event sp2pDeliver in pp2pDeliver
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
         // Trigger pp2pDeliver
         // Event pp2pDeliver in bebDeliver
@@ -139,7 +139,6 @@ void Client::startReceiving(void) {
 
           bebBroadcast(new_msg, sockfd);
 
-          // Trigger URB check for Delivery
         }
         // End bebDeliver trigger in URB
         // End bebDeliver trigger in beb
@@ -148,16 +147,17 @@ void Client::startReceiving(void) {
         //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // End pp2pDeliver
       }
-    } else if (msg.is_ack) {
-      printf("pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+
+      new_msg.is_ack = true;
+      if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
+        perror("cannot send message");
+        exit(1);
+      }
+    } else if (msg.is_ack) { //Less printing : } && !ackPL[msg.creator][msg.seq_nbr][msg.src]) {
+      //printf("pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
       ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
     }
 
-    new_msg.is_ack = true;
-    if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
-      perror("cannot send message");
-      exit(1);
-    }
     // End sp2pDeliver
     // End flp2Deliver
   }
@@ -183,8 +183,8 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
   }
 
   while(deliveredURB[creator][curr_head[creator]]) {
-    // Trigger FIFODeliver, pid, m=[creator, seq_nbr]
-    printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
+    // Trigger FIFODeliver
+    //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
     fprintf(fout, "d %d %d\n", creator, seq_nbr);
     curr_head[creator]++;
   }
