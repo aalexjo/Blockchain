@@ -27,8 +27,8 @@ private :
   vector< vector< vector<bool> > > deliveredPL, ackURB, ackPL;
   vector< vector< bool >  > forwarded, deliveredURB;
   vector<int> curr_head;
-  void bebBroadcast(msg_s msg, int sockfd);
-  void urbBroadcast(int seq_nbr, int sockfd);
+  void bebBroadcast(msg_s msg);
+  void urbBroadcast(int seq_nbr);
   void sendto_udp(msg_s msg, int dst, int sockfd);
   void urbDeliverCheck(int creator, int seq_nbr);
 

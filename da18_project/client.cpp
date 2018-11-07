@@ -14,10 +14,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <thread>
 
 using namespace std;
 
-#define S2SP 10
+#define S2SP 2
 
 Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <string> ips, vector <int> ports)
   : pid(pid), process_n(process_n),  message_n(message_n), id(id), ips(ips), ports(ports) {
@@ -42,36 +43,37 @@ void Client::display(void) {
   }
 }
 
-void Client::bebBroadcast(msg_s msg, int sockfd) {
-  for(int dst = 0; dst < process_n; dst++) {
-    // Trigger PP2PSend
-    sendto_udp(msg, dst, sockfd);
-  }
-}
-
-void Client::urbBroadcast(int seq_nbr, int sockfd) {
-  msg_s msg = { false, pid, seq_nbr, pid};
-  forwarded[msg.creator][msg.seq_nbr] = true;
-  //printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
-  fprintf(fout, "b %d\n", msg.seq_nbr);
-
-  // Trigger bebBroadcast
-  bebBroadcast(msg, sockfd);
-}
-
-void Client::broadcastMessages(void) {
+void Client::bebBroadcast(msg_s msg) {
   int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sockfd == -1){
     perror("cannot open socket");
     exit(1);
   }
 
-  for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
-    // Trigger urbBroadcast
-    urbBroadcast(seq_nbr, sockfd);
+  for(int dst = 0; dst < process_n; dst++) {
+    // Trigger PP2PSend
+    sendto_udp(msg, dst, sockfd);
   }
 
   close(sockfd);
+}
+
+void Client::urbBroadcast(int seq_nbr) {
+  msg_s msg = { false, pid, seq_nbr, pid};
+  forwarded[msg.creator][msg.seq_nbr] = true;
+  //printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
+  //fprintf(fout, "b %d\n", msg.seq_nbr);
+
+  // Trigger bebBroadcast
+  bebBroadcast(msg);
+}
+
+void Client::broadcastMessages(void) {
+  for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
+    // Trigger urbBroadcast
+    urbBroadcast(seq_nbr);
+  }
+
 }
 
 void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
@@ -118,15 +120,12 @@ void Client::startReceiving(void) {
       exit(1);
     }
 
-    msg_s new_msg;
-    memcpy(&new_msg, &msg, sizeof(msg));
-    new_msg.src = pid;
-
     if(!msg.is_ack) {
       // Trigger flp2Deliver
       // Trigger sp2pDeliver
       // Event sp2pDeliver in pp2pDeliver
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
+        fprintf(fout, "pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         // Trigger pp2pDeliver
         //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
@@ -138,9 +137,10 @@ void Client::startReceiving(void) {
         if(!forwarded[msg.creator][msg.seq_nbr]) {
           forwarded[msg.creator][msg.seq_nbr] = true;
           //printf("pid:%i:FORWARD:SEND:[%i,m[%i,%i]]\n", pid, new_msg.src, new_msg.creator, new_msg.seq_nbr);
-
-          bebBroadcast(new_msg, sockfd);
-
+          msg_s new_msg;
+          memcpy(&new_msg, &msg, sizeof(msg));
+          new_msg.src = pid;
+          bebBroadcast(new_msg);
         }
         urbDeliverCheck(msg.creator, msg.seq_nbr);
         // End bebDeliver trigger in URB
@@ -149,13 +149,13 @@ void Client::startReceiving(void) {
       // End sp2pDeliver
       // End flp2Deliver
 
-      new_msg.is_ack = true;
-      if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
+      msg.is_ack = true;
+      if (sendto(sockfd, (void* ) &msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
         perror("cannot send message");
         exit(1);
       }
     } else if (msg.is_ack && !ackPL[msg.creator][msg.seq_nbr][msg.src]) { // Second for less priting
-      printf("pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+      //fprintf(fout, "pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
       ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
     }
   }
@@ -183,7 +183,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
   while(deliveredURB[creator][curr_head[creator]]) {
     // Trigger FIFODeliver
     //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
-    fprintf(fout, "d %d %d\n", creator, seq_nbr);
+    //fprintf(fout, "d %d %d\n", creator, seq_nbr);
     curr_head[creator]++;
   }
 }
