@@ -148,6 +148,15 @@ void Client::startReceiving(void) {
       exit(1);
     }
 
+    /*
+    switch(msg.type) {
+    case isMsg: printf("msg.type:isMsg\n");
+    case isMsgAck: printf("msg.type:isMsgAck\n");
+    case isDoneReq: printf("msg.type:isDoneReq\n");
+    case isDoneAck: printf("msg.type:isDoneAck\n");
+    }
+    // */
+
     switch(msg.type) {
     case isMsg:
       // Trigger sp2pDeliver
@@ -185,7 +194,6 @@ void Client::startReceiving(void) {
       ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
       break;
     case isDoneReq:
-      printf("msg.type:isDoneReq\n");
       msg_s new_msg;
       new_msg = { isDoneAck, msg.creator, 0, pid, (curr_head[msg.creator] == message_n)};
       if (sendto(sockfd, (void* ) &new_msg, sizeof(new_msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
@@ -194,7 +202,6 @@ void Client::startReceiving(void) {
       }
       break;
     case isDoneAck:
-      printf("msg.type:isDoneAck\n");
       ackDone[msg.src] = true;
       done[msg.src] = msg.done;
       break;
