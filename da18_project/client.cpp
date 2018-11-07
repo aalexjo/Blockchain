@@ -72,14 +72,11 @@ void Client::broadcastMessages(void) {
   for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
     // Trigger urbBroadcast
     urbBroadcast(seq_nbr);
-    if (seq_nbr%10 == 0) {
-      struct timespec timeout;
-      timeout.tv_sec = 1;
-      timeout.tv_nsec = 0;
-      nanosleep(&timeout, NULL);
-    }
+    struct timespec timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_nsec = 500000;
+    nanosleep(&timeout, NULL);
   }
-
 }
 
 void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
@@ -95,7 +92,7 @@ void Client::sendto_udp(msg_s msg, int dst, int sockfd) {
     }
 		struct timespec timeout;
 		timeout.tv_sec = 0;
-		timeout.tv_nsec = 200;
+		timeout.tv_nsec = 1000;
 		nanosleep(&timeout, NULL);
   }
 }
