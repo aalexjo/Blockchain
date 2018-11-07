@@ -128,6 +128,8 @@ void Client::startReceiving(void) {
       // Event sp2pDeliver in pp2pDeliver
       if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
         // Trigger pp2pDeliver
+        //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+        deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
         // Event pp2pDeliver in bebDeliver
         // Trigger bebDeliver
         // Event bebDeliver in URB
@@ -140,26 +142,22 @@ void Client::startReceiving(void) {
           bebBroadcast(new_msg, sockfd);
 
         }
-        // End bebDeliver trigger in URB
-        // End bebDeliver trigger in beb
-        deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
         urbDeliverCheck(msg.creator, msg.seq_nbr);
-        //printf("pid:%i:PL  :DELV:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+        // End bebDeliver trigger in URB
         // End pp2pDeliver
       }
+      // End sp2pDeliver
+      // End flp2Deliver
 
       new_msg.is_ack = true;
       if (sendto(sockfd, (void* ) &new_msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
         perror("cannot send message");
         exit(1);
       }
-    } else if (msg.is_ack) { //Less printing : } && !ackPL[msg.creator][msg.seq_nbr][msg.src]) {
-      //printf("pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
+    } else if (msg.is_ack && !ackPL[msg.creator][msg.seq_nbr][msg.src]) { // Second for less priting
+      printf("pid:%i:PL:ACK:[%i,m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
       ackPL[msg.creator][msg.seq_nbr][msg.src] = true;
     }
-
-    // End sp2pDeliver
-    // End flp2Deliver
   }
 }
 
