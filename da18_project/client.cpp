@@ -72,6 +72,12 @@ void Client::broadcastMessages(void) {
   for(int seq_nbr = 0; seq_nbr < message_n; seq_nbr++) {
     // Trigger urbBroadcast
     urbBroadcast(seq_nbr);
+    if (seq_nbr%10 == 0) {
+      struct timespec timeout;
+      timeout.tv_sec = 1;
+      timeout.tv_nsec = 0;
+      nanosleep(&timeout, NULL);
+    }
   }
 
 }
