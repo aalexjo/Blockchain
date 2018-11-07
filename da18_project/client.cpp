@@ -28,7 +28,7 @@ Client::Client(int pid, int process_n, int message_n, vector <int> id, vector <s
   ackPL = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   ackURB = vector<vector<vector<bool>>>(process_n, vector<vector<bool>>(message_n, vector<bool>(process_n, false)));
   curr_head = vector<int>(process_n, 0);
-  string fname = "da_proc_" + to_string(pid) + ".txt";
+  string fname = "da_proc_" + to_string(pid+1) + ".out";
   fout = fopen(fname.c_str(), "w+");
 
 }
@@ -62,7 +62,7 @@ void Client::urbBroadcast(int seq_nbr) {
   msg_s msg = { false, pid, seq_nbr, pid};
   forwarded[msg.creator][msg.seq_nbr] = true;
   //printf("BROADCAST:SEND:[%i,m[%i,%i]]\n", msg.src, msg.creator, msg.seq_nbr);
-  fprintf(fout, "b %d\n", msg.seq_nbr);
+  fprintf(fout, "b %d\n", msg.seq_nbr+1);
 
   // Trigger bebBroadcast
   bebBroadcast(msg);
@@ -174,7 +174,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
     //printf("NBR_RDY: %i\n", nbr_rdy);
 
     // Majoity Ack
-    if(nbr_rdy > (process_n-1)/2) {
+    if(nbr_rdy > (process_n)/2) {
       //Trigger urbDeliver
       //printf("pid:%i:URB :DELV:m[%i,%i]. \n", pid, creator, seq_nbr);
       deliveredURB[creator][seq_nbr] = true;
@@ -185,7 +185,7 @@ void Client::urbDeliverCheck(int creator, int seq_nbr) {
     // Trigger FIFODeliver
     //printf("pid:%i:FIFO:DELV:m[%i,%i]\n", pid, creator, curr_head[creator]);
     int m_nbr = curr_head[creator];
-    fprintf(fout, "d %d %d\n", creator, m_nbr);
+    fprintf(fout, "d %d %d\n", creator+1, m_nbr+1);
     curr_head[creator]++;
   }
 }

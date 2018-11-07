@@ -8,9 +8,9 @@
 
 # time to wait for correct processes to broadcast all messages (in seconds)
 # (should be adapted to the number of messages to send)
-time_to_finish=30
+time_to_finish=5
 
-init_time=10
+init_time=5
 
 # configure lossy network simulation
 sudo tc qdisc change dev lo root netem delay 50ms 200ms loss 10% 25% reorder 25% 50%
@@ -28,7 +28,7 @@ echo "5
 # start 5 processes, each broadcasting 100 messages
 for i in `seq 1 5`
 do
-    ./da_proc $i membership 30 &
+    ./da_proc $i membership 100 &
     da_proc_id[$i]=$!
 done
 
