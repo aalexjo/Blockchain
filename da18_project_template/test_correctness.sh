@@ -29,7 +29,7 @@ echo "5
 # start 5 processes, each broadcasting 100 messages
 for i in `seq 1 5`
 do
-    ./da_proc $i membership 100 &
+    ./da_proc $i membership 50 &
     da_proc_id[$i]=$!
 done
 
@@ -48,7 +48,7 @@ kill -CONT "${da_proc_id[3]}" # resume process 3
 for i in `seq 1 5`
 do
     if [ -n "${da_proc_id[$i]}" ]; then
-	kill -USR2 "${da_proc_id[$i]}"
+	kill -USR1 "${da_proc_id[$i]}"
     fi
 done
 

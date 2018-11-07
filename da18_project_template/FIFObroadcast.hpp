@@ -18,6 +18,7 @@ public:
 
 private:
   reliableBroadcast *URB;
+  FIFOThreadList threadListItem;
   int n;
   int pid;
   std::vector<int> delivered;

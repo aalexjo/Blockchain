@@ -13,11 +13,11 @@ void *thr_broadcaster(void *arg) {
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
   //printf("thr_broadcasting %d\n", threadListItem -> msg -> seq_nr );
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 1; i++) {
   	threadListItem->udp->broadcast(threadListItem -> msg);
     struct timespec sleep_time;
     sleep_time.tv_sec = 0;
-    sleep_time.tv_nsec =10  ;
+    sleep_time.tv_nsec =500  ;
     nanosleep(&sleep_time, NULL);
   }
   return 0;
@@ -25,13 +25,14 @@ void *thr_broadcaster(void *arg) {
 
 void PerfectLink::broadcast(struct msg_s* msg){
   //printf("broadcasting %d\n", msg -> seq_nr );
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 1; i++) {
   	udp->broadcast(msg);
     struct timespec sleep_time;
     sleep_time.tv_sec = 0;
-    sleep_time.tv_nsec =10  ;
+    sleep_time.tv_nsec =1  ;
     nanosleep(&sleep_time, NULL);
   }
+
   /*
   threadListItem.msg = msg;
   pthread_t broadcaster;
