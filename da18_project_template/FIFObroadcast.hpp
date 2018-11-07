@@ -1,9 +1,12 @@
 #include "reliableBroadcast.hpp"
+#include <cstdio>
 
 typedef struct{
   reliableBroadcast *URB;
   int n;
   std::vector<int>* delivered;
+  FILE * fout;
+
 }FIFOThreadList;
 
 class FIFObroadcast{
@@ -18,5 +21,5 @@ private:
   int n;
   int pid;
   std::vector<int> delivered;
-
+  FILE * fout;
 };

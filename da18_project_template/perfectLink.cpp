@@ -11,25 +11,34 @@ PerfectLink::PerfectLink(int pid, std::vector<int> ports, std::function<void(msg
 void *thr_broadcaster(void *arg) {
 
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
+  //printf("thr_broadcasting %d\n", threadListItem -> msg -> seq_nr );
 
   for (int i = 0; i < 100; i++) {
   	threadListItem->udp->broadcast(threadListItem -> msg);
     struct timespec sleep_time;
     sleep_time.tv_sec = 0;
-    sleep_time.tv_nsec =10000;
+    sleep_time.tv_nsec =10  ;
     nanosleep(&sleep_time, NULL);
   }
   return 0;
 }
 
 void PerfectLink::broadcast(struct msg_s* msg){
-
+  //printf("broadcasting %d\n", msg -> seq_nr );
+  for (int i = 0; i < 20; i++) {
+  	udp->broadcast(msg);
+    struct timespec sleep_time;
+    sleep_time.tv_sec = 0;
+    sleep_time.tv_nsec =10  ;
+    nanosleep(&sleep_time, NULL);
+  }
+  /*
   threadListItem.msg = msg;
   pthread_t broadcaster;
   int e = pthread_create(&broadcaster, NULL, thr_broadcaster, &(threadListItem));
   if(e==-1) {
      error("perfectLink_broadcast: pthread_create");
-  }
+  }*/
 }
 
 void PerfectLink::startReceiving(){

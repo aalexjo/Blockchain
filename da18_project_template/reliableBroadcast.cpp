@@ -29,7 +29,7 @@ void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
 
     link->broadcast(ack_msg);
 
-    printf("received new message from %d with seq_nr %d \n", msg->sender, msg->seq_nr);
+    //printf("received new message from %d with seq_nr %d \n", msg->sender, msg->seq_nr);
   }else{
     if(msg->is_ack){
       for(unsigned int i = 0; i < ack[msg->sender][msg->seq_nr].size(); i++){

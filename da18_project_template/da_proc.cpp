@@ -113,9 +113,11 @@ int main(int argc, char** argv) {
 	//wait until stopped
 	while(msg.seq_nr < message_n) {
 		msg.seq_nr = msg.seq_nr + 1;
-		//perfectLink.broadcast(&msg);//"hallo all",10 );
 		fifo.broadcast(&msg);
-
+		struct timespec sleep_time;
+		//sleep_time.tv_sec = 1;
+		sleep_time.tv_nsec = 5;
+		nanosleep(&sleep_time, NULL);
 	}
 	struct timespec sleep_time;
 	sleep_time.tv_sec = 2;
