@@ -1,45 +1,48 @@
-#include <pthread.h>
+//this module has lost most if its functionality as it is easier implemented at other layers
+//we might want to migrate the rest to spawn the threads in URB and rebroadcast in UDP
+#include <thread>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cstring>
 #include "perfectLink.hpp"
 
 PerfectLink::PerfectLink(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback){
   udp = new UDP(pid, ports, callback);
-  threadListItem.udp = this->udp;
 }
 
 void *thr_broadcaster(void *arg) {
 
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
-  //printf("thr_broadcasting %d\n", threadListItem -> msg -> seq_nr );
 
-  for (int i = 0; i < 1; i++) {
-  	threadListItem->udp->broadcast(threadListItem -> msg);
+  for (int i = 0; i < 5; i++) {
+  	threadListItem->udp->broadcast(threadListItem->msg);
     struct timespec sleep_time;
-    sleep_time.tv_sec = 0;
-    sleep_time.tv_nsec =500  ;
+    sleep_time.tv_sec = 1;
+    sleep_time.tv_nsec = 1;//these values are modifiable
     nanosleep(&sleep_time, NULL);
   }
+
+  //TODO: free memory allocated to thread list and msg!!
   return 0;
 }
 
 void PerfectLink::broadcast(struct msg_s* msg){
-  //printf("broadcasting %d\n", msg -> seq_nr );
-  for (int i = 0; i < 1; i++) {
-  	udp->broadcast(msg);
-    struct timespec sleep_time;
-    sleep_time.tv_sec = 0;
-    sleep_time.tv_nsec =1  ;
-    nanosleep(&sleep_time, NULL);
-  }
+//using pthread now because it does not crash when many threads are spawned
+//maybe it does not let us now that we spawn to many threads? might need to terminate
+//a thread if we know that it has received acks from all other ps.
+//can also check if we are sending an ack and not spawn a new thread for those
+  perfectLinkThreadList *threadListItem = new perfectLinkThreadList;//this must by dynamically allocated as threads live a long time
+  threadListItem->udp = this->udp;
+  msg_s *new_msg = new msg_s;
+  memcpy(new_msg, msg, sizeof(*msg));
+  threadListItem->msg = new_msg;
 
-  /*
-  threadListItem.msg = msg;
+  //std::thread (thr_broadcaster, threadListItem).detach(); //crashes for large m
   pthread_t broadcaster;
-  int e = pthread_create(&broadcaster, NULL, thr_broadcaster, &(threadListItem));
+  int e = pthread_create(&broadcaster, NULL, thr_broadcaster, (threadListItem));
   if(e==-1) {
      error("perfectLink_broadcast: pthread_create");
-  }*/
+  }
 }
 
 void PerfectLink::startReceiving(){
@@ -47,6 +50,7 @@ void PerfectLink::startReceiving(){
 
 }
 
+//currently not in use
 void PerfectLink::UDPcallback(struct msg_s* msg){
   //owner->pp2pCallback(this->owner, msg);
   printf("lolol\n" );

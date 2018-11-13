@@ -32,6 +32,7 @@ UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback):
   threadListItem = {ports[pid], callback};
 }
 
+//should be thread safe
 void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   struct sockaddr_in si_other;
   int s, slen=sizeof(si_other);
@@ -44,10 +45,9 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
 
   memset((char *) &si_other, 0, sizeof(si_other)); //clearing si_other
   si_other.sin_family = AF_INET;
+  //printf("Sent: msg-> sender %d\n", msg->sender);
 
-  //TODO: loop through all ports to send to
   for( auto it = this->ports.begin(); it != this->ports.end(); it++){
-    //printf("Sent: msg-> sender %d\n", msg->sender);
     si_other.sin_port = htons(*it);//threadListItem.port);
     if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
     int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
@@ -89,9 +89,11 @@ void *thr_listener(void * arg){
       fprintf(stderr,"recvfrom: length of received message is larger than max message length: %d vs %d\n\n",res,BUFLEN);
       assert(res < BUFLEN-1);
     }
+    //printf("Recevied: msg-> sender %d\n", msg->sender);
      ((threadListItem->callback))(msg);
 
      //if(msg->is_ack == true && msg->ack_from != piders) printf("we got someone elses ack!!!\n" );
+
   }
 
   // Never executed - this thread will be killed if it is not needed any more.

@@ -15,7 +15,6 @@ FIFObroadcast::FIFObroadcast(int n, int pid, std::vector<int> ports): n(n), pid(
 
 void FIFObroadcast::broadcast(struct msg_s* msg){
   fprintf(fout, "b %d\n", msg->seq_nr);
-  //std::cout<<"b "<<msg->seq_nr<<std::endl;
   URB->broadcast(msg);
 }
 
@@ -29,18 +28,14 @@ void *thr_receiver(void *arg) {
       int j = (*threadListItem->delivered)[i];
       if (threadListItem->URB->canDeliver(i, j+1)){
         //TODO:deliver that shit
-        //j = ++(*threadListItem->delivered)[i];
         fprintf(threadListItem->fout, "d %d %d\n", i+1, ++(*threadListItem->delivered)[i] );
-        //std::cout<<"d "<< i+1 << " " << (*threadListItem->delivered)[i] << std::endl;
       }
     }
   }
 }
 
 void FIFObroadcast::startReceiving(){
-
-  //threadListItem = {this->URB,n, &delivered, this->fout};
-  pthread_t broadcaster;
+  pthread_t broadcaster;//i am good at consistent naming
   int e = pthread_create(&broadcaster, NULL, thr_receiver, &(threadListItem));
   if(e==-1) {
      error("perfectLink_broadcast: pthread_create");

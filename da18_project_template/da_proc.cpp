@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 		nanosleep(&sleep_time, NULL);
 	}
 	struct timespec sleep_time;
-	sleep_time.tv_sec = 2;
+	sleep_time.tv_sec = 8;
 	sleep_time.tv_nsec = 0;
 	nanosleep(&sleep_time, NULL);
 }

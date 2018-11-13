@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <mutex>
 typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *data, int datalength);
 //int piders;
 typedef struct{
@@ -26,6 +27,8 @@ public:
 
 
 private:
+  std::mutex broadcast_mutex;
+  int soc;
   //void *thr_listener(void* arg);
   UDPThreadList threadListItem;
   //const char* ipaddr;

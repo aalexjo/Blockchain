@@ -25,7 +25,5 @@ public:
 
 private:
   static void UDPcallback(struct msg_s* msg);
-  perfectLinkThreadList threadListItem;
   UDP* udp;
-
 };
