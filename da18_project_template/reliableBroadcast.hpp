@@ -18,7 +18,7 @@ public:
   void broadcast(struct msg_s* msg);
   void receiver();
   bool canDeliver(int pi_sender, int m);
-
+  void urbPrint();
 private:
 	void pp2pCallback(struct msg_s* msg);
 

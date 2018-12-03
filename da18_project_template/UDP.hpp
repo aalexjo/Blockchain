@@ -9,6 +9,7 @@ typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *da
 typedef struct{
   int port;
   std::function<void(msg_s*)> callback;
+  int *counter;
 } UDPThreadList;
 
 struct msg_s{
@@ -24,6 +25,7 @@ public:
   UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback);
   void broadcast(struct msg_s* msg);//char const * data, int dataLength);
   void startReceiving();
+  void udpPrint();
 
 
 private:
@@ -33,4 +35,7 @@ private:
   UDPThreadList threadListItem;
   //const char* ipaddr;
   std::vector<int> ports;
+  int pid;
+  int broadcast_count;
+  int rec_from_1;
 };

@@ -29,11 +29,14 @@ void error(char const *e){
 }
 
 UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports){
-  threadListItem = {ports[pid], callback};
+  threadListItem = {ports[pid], callback, &rec_from_1};
+  broadcast_count = 0;
+  this->pid = pid;
 }
 
 //should be thread safe
 void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
+
   struct sockaddr_in si_other;
   int s, slen=sizeof(si_other);
 
@@ -46,14 +49,21 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   memset((char *) &si_other, 0, sizeof(si_other)); //clearing si_other
   si_other.sin_family = AF_INET;
   //printf("Sent: msg-> sender %d\n", msg->sender);
-
-  for( auto it = this->ports.begin(); it != this->ports.end(); it++){
-    si_other.sin_port = htons(*it);//threadListItem.port);
-    if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
-    int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
-    if(e==-1)  error("udp_broadcast: sendto()");
+  for(int i = 0; i < 1; i++){
+    for( auto it = this->ports.begin(); it != this->ports.end(); it++){
+      si_other.sin_port = htons(*it);//threadListItem.port);
+      if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
+      int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
+      if(e==-1)  error("udp_broadcast: sendto()");
+    }
+    // struct timespec sleep_time;
+    // sleep_time.tv_sec = 0;
+    // sleep_time.tv_nsec = 100;//these values are modifiable
+    // //nanosleep(&sleep_time, NULL);
   }
+  //must open new socket in order to achive thread safeness
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
+  if(((msg->is_ack) && msg->ack_from == pid))broadcast_count++;
 }
 
 
@@ -85,15 +95,10 @@ void *thr_listener(void * arg){
 
     res = recvfrom(s, (void*)msg, 2*sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
-    if(res >= BUFLEN-1){
-      fprintf(stderr,"recvfrom: length of received message is larger than max message length: %d vs %d\n\n",res,BUFLEN);
-      assert(res < BUFLEN-1);
-    }
     //printf("Recevied: msg-> sender %d\n", msg->sender);
      ((threadListItem->callback))(msg);
-
+     if((msg->is_ack) && msg->ack_from == 0) (*threadListItem->counter)++;
      //if(msg->is_ack == true && msg->ack_from != piders) printf("we got someone elses ack!!!\n" );
-
   }
 
   // Never executed - this thread will be killed if it is not needed any more.
@@ -106,4 +111,9 @@ void UDP::startReceiving(){
   pthread_t listener;
   int e = pthread_create(&listener, NULL, thr_listener, &(this->threadListItem));
   if(e==-1)  error("udp_broadcast: pthread_create");
+}
+
+void UDP::udpPrint(){
+  printf("PID: %d - num broadcasted acks %d \n", pid+1, broadcast_count);
+  printf("PID: %d - received acks from 1 = %d\n", pid+1, rec_from_1);
 }

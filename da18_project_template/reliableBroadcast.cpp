@@ -1,6 +1,9 @@
 #include "reliableBroadcast.hpp"
 #include <functional>
 
+//this function uses stupidly inefficient datastructurs and initializez lots of stuff in runtime
+//it is therefore very slow and the main source of delay in the entire project
+//if you feel like you have a few minutes on your hands optmize this
 void *thr_acker(void * arg) {
   struct timespec sleep_time;
   sleep_time.tv_sec = 0;
@@ -16,7 +19,7 @@ void *thr_acker(void * arg) {
   while(true){
     if(i < threadListItem->received->size()){
       //printf("size of received %d\n", threadListItem->received->size());
-      msg_s msg = threadListItem->received->at(i);
+      msg_s msg = threadListItem->received->at(i);//badly need to remove this message from received
       i++;
       if(threadListItem->ack->at(msg.sender).find(msg.seq_nr) == threadListItem->ack->at(msg.sender).end()){//have not seen this message before
         threadListItem->ack->at(msg.sender)[msg.seq_nr] = std::vector<int>(1,threadListItem->pid);
@@ -25,7 +28,6 @@ void *thr_acker(void * arg) {
 
         threadListItem->link->broadcast(ack_msg);
 
-        //printf("received new message from %d with seq_nr %d \n", msg.sender, msg.seq_nr);
       }else{
         if(msg.is_ack){
           for(unsigned int i = 0; i < threadListItem->ack->at(msg.sender)[msg.seq_nr].size(); i++){
@@ -41,7 +43,7 @@ void *thr_acker(void * arg) {
     }else{
       //wait a bit to avoid an empty loop
   		sleep_time.tv_sec = 0;
-  		sleep_time.tv_nsec = 1000;
+  		sleep_time.tv_nsec = 100;
   		nanosleep(&sleep_time, NULL);
     }
   }
@@ -68,7 +70,7 @@ reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): n(
 
 
 void reliableBroadcast::broadcast(struct msg_s* msg){
-  this->forward[pid].push_back(msg->seq_nr);
+  //this->forward[pid].push_back(msg->seq_nr);
   //this->ack[pid][msg->seq_nr].push_back(pid);
   link->broadcast(msg);
 }
@@ -81,16 +83,6 @@ void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
   received.push_back(new_message);
 }
 
-
-
-
-void reliableBroadcast::receiver(){
-
-	pthread_t listener;
-	int e = pthread_create(&listener, NULL, thr_acker, &(this->threadListItem));
-	if (e == -1)  error("reliableBroadcast: pthread_create");
-}
-
 bool reliableBroadcast::canDeliver(int pi_sender, int m){
   if(this->ack[pi_sender].find(m) != this->ack[pi_sender].end()){
 	      if (this->ack[pi_sender][m].size() > (unsigned int)n/2) {
@@ -98,4 +90,9 @@ bool reliableBroadcast::canDeliver(int pi_sender, int m){
 	      }
       }
 	return false;
+}
+
+void reliableBroadcast::urbPrint(){
+//  printf("");
+  link->linkPrint();
 }

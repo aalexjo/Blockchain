@@ -22,8 +22,10 @@ public:
   PerfectLink(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback);
   void broadcast(struct msg_s* msg);
   void startReceiving();
+  void linkPrint();
 
 private:
   static void UDPcallback(struct msg_s* msg);
   UDP* udp;
+
 };
