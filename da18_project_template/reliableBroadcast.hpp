@@ -9,6 +9,8 @@ typedef struct{
   std::vector<msg_s> *received;
   std::vector<std::map<int, std::vector<int>>> *ack;
   int pid;
+  pthread_mutex_t* received_lock;
+
 } URBThreadList;
 
 class reliableBroadcast{
@@ -34,4 +36,7 @@ private:
 
   //the map data structure isrelativly slow, might want to do like git@prototype branch
 	std::vector<std::map<int, std::vector<int>>> ack; //ack[src_pi][seq_nr][acking_pi]
+
+  pthread_mutex_t received_lock;
+
 };

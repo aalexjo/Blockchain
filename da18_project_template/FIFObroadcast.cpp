@@ -62,5 +62,7 @@ void FIFObroadcast::printOutput(){
     fprintf(this->fout, "%s\n", (*it).c_str());
   }
   printf("PID: %d printed a vector of length %d\n",pid+1, (int)output.size() );
-  URB->urbPrint();
+  if(output.size()<4000){
+    URB->urbPrint();
+  }
 }

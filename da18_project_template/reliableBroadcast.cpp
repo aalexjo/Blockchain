@@ -19,7 +19,10 @@ void *thr_acker(void * arg) {
   while(true){
     if(i < threadListItem->received->size()){
       //printf("size of received %d\n", threadListItem->received->size());
+      pthread_mutex_lock(threadListItem->received_lock);
       msg_s msg = threadListItem->received->at(i);//badly need to remove this message from received
+      pthread_mutex_unlock(threadListItem->received_lock);
+
       i++;
       if(threadListItem->ack->at(msg.sender).find(msg.seq_nr) == threadListItem->ack->at(msg.sender).end()){//have not seen this message before
         threadListItem->ack->at(msg.sender)[msg.seq_nr] = std::vector<int>(1,threadListItem->pid);
@@ -28,18 +31,18 @@ void *thr_acker(void * arg) {
 
         threadListItem->link->broadcast(ack_msg);
 
-      }else{
-        if(msg.is_ack){
-          for(unsigned int i = 0; i < threadListItem->ack->at(msg.sender)[msg.seq_nr].size(); i++){
-            if(threadListItem->ack->at(msg.sender)[msg.seq_nr][i] == msg.ack_from){
-              //printf("already acked on scr:%d sn:%d, from %d\n", msg.sender, msg.seq_nr,msg.ack_from);
-              continue;
-            }
-          }
-          threadListItem->ack->at(msg.sender)[msg.seq_nr].push_back(msg.ack_from);
-          //printf("received acknowlagement for %d with seq_nr %d from %d\n", msg.sender, msg.seq_nr, msg.ack_from);
-        }
       }
+      if(msg.is_ack){
+        for(unsigned int i = 0; i < threadListItem->ack->at(msg.sender)[msg.seq_nr].size(); i++){
+          if(threadListItem->ack->at(msg.sender)[msg.seq_nr][i] == msg.ack_from){
+            //printf("already acked on scr:%d sn:%d, from %d\n", msg.sender, msg.seq_nr,msg.ack_from);
+            continue;
+          }
+        }
+        threadListItem->ack->at(msg.sender)[msg.seq_nr].push_back(msg.ack_from);
+        //printf("received acknowlagement for %d with seq_nr %d from %d\n", msg.sender, msg.seq_nr, msg.ack_from);
+      }
+
     }else{
       //wait a bit to avoid an empty loop
   		sleep_time.tv_sec = 0;
@@ -57,10 +60,13 @@ reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports): n(
   using namespace std::placeholders;
   link = new PerfectLink(pid, ports, std::bind(&reliableBroadcast::pp2pCallback, this, _1));
   link->startReceiving();
+  pthread_mutex_init(&(this->received_lock),NULL);
+
   this->threadListItem.link = this->link;
   this->threadListItem.ack = &(this->ack);
   this->threadListItem.received = &(this->received);
   this->threadListItem.pid = pid;
+  this->threadListItem.received_lock = &received_lock;
 
   pthread_t listener;
 	int e = pthread_create(&listener, NULL, thr_acker, &(this->threadListItem));
@@ -78,9 +84,10 @@ void reliableBroadcast::broadcast(struct msg_s* msg){
 
 //essential that callback function is fast as this is called from UDPreceiver
 void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
-  //printf("pp2pcallback: msg-> sender %d\n", msg->sender);
   msg_s new_message = {msg->seq_nr, msg->sender, msg->is_ack, msg->ack_from};
+  pthread_mutex_lock(&(this->received_lock));
   received.push_back(new_message);
+  pthread_mutex_unlock(&(this->received_lock));
 }
 
 bool reliableBroadcast::canDeliver(int pi_sender, int m){

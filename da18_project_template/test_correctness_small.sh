@@ -34,23 +34,24 @@ done
 sleep $init_time
 
 # start broadcasting
-for i in `seq 1 2`
-do
-    if [ -n "${da_proc_id[$i]}" ]; then
-	      kill -USR1 "${da_proc_id[$i]}"
-    fi
-done
-
+# for i in `seq 1 3`
+# do
+#     if [ -n "${da_proc_id[$i]}" ]; then
+# 	      kill -USR1 "${da_proc_id[$i]}"
+#     fi
+# done
+killall -USR1 da_proc
 # leave some time for the correct processes to broadcast all messages
 sleep $time_to_finish
 
 # stop all processes
-for i in `seq 1 2`
-do
-    if [ -n "${da_proc_id[$i]}" ]; then
-	kill -TERM "${da_proc_id[$i]}"
-    fi
-done
+# for i in `seq 1 2 3`
+# do
+#     if [ -n "${da_proc_id[$i]}" ]; then
+# 	kill -TERM "${da_proc_id[$i]}"
+#     fi
+# done
+killall -TERM da_proc
 
 # wait until all processes stop
 for i in `seq 1 2`

@@ -37,5 +37,5 @@ private:
   std::vector<int> ports;
   int pid;
   int broadcast_count;
-  int rec_from_1;
+
 };

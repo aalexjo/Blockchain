@@ -23,6 +23,10 @@
 
 #define BUFLEN 512
 
+int rec_from_1;
+int rec_from_3;
+int rec_from_5;
+
 void error(char const *e){
   perror(e);
   exit(1);
@@ -97,7 +101,21 @@ void *thr_listener(void * arg){
     if(res == -1) error("thr_udpListen:recvfrom");
     //printf("Recevied: msg-> sender %d\n", msg->sender);
      ((threadListItem->callback))(msg);
-     if((msg->is_ack) && msg->ack_from == 0) (*threadListItem->counter)++;
+     if((msg->is_ack)){
+       switch (msg->ack_from) {
+         case 0:
+          rec_from_1++;
+          break;
+         case 2:
+          rec_from_3++;
+          break;
+        case 4:
+          rec_from_5++;
+          break;
+        default:
+          break;
+       }
+     }
      //if(msg->is_ack == true && msg->ack_from != piders) printf("we got someone elses ack!!!\n" );
   }
 
@@ -116,4 +134,7 @@ void UDP::startReceiving(){
 void UDP::udpPrint(){
   printf("PID: %d - num broadcasted acks %d \n", pid+1, broadcast_count);
   printf("PID: %d - received acks from 1 = %d\n", pid+1, rec_from_1);
+  printf("PID: %d - received acks from 3 = %d\n", pid+1, rec_from_3);
+  printf("PID: %d - received acks from 5 = %d\n", pid+1, rec_from_5);
+
 }
