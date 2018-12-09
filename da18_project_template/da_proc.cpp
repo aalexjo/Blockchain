@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
 	//PerfectLink perfectLink(pid, ports, perfectLinkTestCallback);
 	//perfectLink.startReceiving();
-	fifo = new FIFObroadcast(process_n, pid-1, ports);
+	fifo = new FIFObroadcast(process_n, pid-1, ports, message_n);
 	fifo->startReceiving();
 
 
@@ -117,10 +117,6 @@ int main(int argc, char** argv) {
 	while(msg.seq_nr < message_n) {
 		msg.seq_nr = msg.seq_nr + 1;
 		fifo->broadcast(&msg);
-		// struct timespec sleep_time;
-		// //sleep_time.tv_sec = 1;
-		// sleep_time.tv_nsec = 1;
-		// nanosleep(&sleep_time, NULL);
 	}
 	fifo->stopReceiving();
 	printf("all done in p%d\n",pid);

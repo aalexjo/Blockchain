@@ -12,7 +12,7 @@ typedef struct{
 
 class FIFObroadcast{
 public:
-  FIFObroadcast(int n, int pid, std::vector<int> ports);
+  FIFObroadcast(int n, int pid, std::vector<int> ports, int message_n);
 
   void broadcast(struct msg_s* msg);
   void startReceiving();
@@ -23,6 +23,7 @@ private:
   FIFOThreadList threadListItem;
   int n;
   int pid;
+  int message_n;
   std::vector<int> delivered;
   FILE * fout;
   pthread_t broadcaster;//i am good at consistent naming

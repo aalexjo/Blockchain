@@ -33,7 +33,7 @@ void error(char const *e){
 }
 
 UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports){
-  threadListItem = {ports[pid], callback, &rec_from_1};
+  threadListItem = {ports[pid], callback};
   broadcast_count = 0;
   this->pid = pid;
 }
@@ -60,14 +60,14 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
       int e = sendto(s, (void*) msg, sizeof(msg), 0, (struct sockaddr *) &si_other, slen);//sending data
       if(e==-1)  error("udp_broadcast: sendto()");
     }
-    // struct timespec sleep_time;
-    // sleep_time.tv_sec = 0;
-    // sleep_time.tv_nsec = 100;//these values are modifiable
-    // //nanosleep(&sleep_time, NULL);
   }
   //must open new socket in order to achive thread safeness
   close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
-  if(((msg->is_ack) && msg->ack_from == pid))broadcast_count++;
+  if(!(msg->is_ack))broadcast_count++;
+  struct timespec sleep_time;
+  sleep_time.tv_sec = 0;
+  sleep_time.tv_nsec = 10;//these values are modifiable
+  nanosleep(&sleep_time, NULL);//give the receiver time to catch up
 }
 
 
@@ -97,11 +97,11 @@ void *thr_listener(void * arg){
   msg = new msg_s;
   while(1){
 
-    res = recvfrom(s, (void*)msg, 2*sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
+    res = recvfrom(s, (void*)msg, sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
     //printf("Recevied: msg-> sender %d\n", msg->sender);
      ((threadListItem->callback))(msg);
-     if((msg->is_ack)){
+     if((msg->is_ack) && msg->sender == 2){
        switch (msg->ack_from) {
          case 0:
           rec_from_1++;
@@ -132,7 +132,7 @@ void UDP::startReceiving(){
 }
 
 void UDP::udpPrint(){
-  printf("PID: %d - num broadcasted acks %d \n", pid+1, broadcast_count);
+  printf("PID: %d - num broadcasted messages %d \n", pid+1, broadcast_count);
   printf("PID: %d - received acks from 1 = %d\n", pid+1, rec_from_1);
   printf("PID: %d - received acks from 3 = %d\n", pid+1, rec_from_3);
   printf("PID: %d - received acks from 5 = %d\n", pid+1, rec_from_5);

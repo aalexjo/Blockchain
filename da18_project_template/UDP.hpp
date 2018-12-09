@@ -9,7 +9,6 @@ typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *da
 typedef struct{
   int port;
   std::function<void(msg_s*)> callback;
-  int *counter;
 } UDPThreadList;
 
 struct msg_s{
