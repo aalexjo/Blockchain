@@ -11,8 +11,8 @@ void *thr_broadcaster(void *arg) {
   perfectLinkThreadList * threadListItem = (perfectLinkThreadList*) arg;
   while(true){
     struct timespec sleep_time;
-    sleep_time.tv_sec = 1;
-    sleep_time.tv_nsec = 1;//these values are modifiable
+    sleep_time.tv_sec = 0;
+    sleep_time.tv_nsec = 900000000;//these values are modifiable
     nanosleep(&sleep_time, NULL);//give the receiver time to catch up
     pthread_mutex_lock(threadListItem->list_lock);
 

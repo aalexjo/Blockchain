@@ -23,16 +23,19 @@ void *thr_acker(void * arg) {
       //printf("size of received %d\n", threadListItem->received->size());
       pthread_mutex_lock(threadListItem->received_lock);
       msg_s msg = threadListItem->received->at(i);//badly need to remove this message from received
+      // if(i == threadListItem->received->size()){// we have caught up with all messages, clear the buffer and reset counter
+      //   threadListItem->received->clear();
+      //   i = 0;
+      // }
       pthread_mutex_unlock(threadListItem->received_lock);
 
-      i++;
       pthread_mutex_lock(threadListItem->ack_lock);
       if(threadListItem->ack->at(msg.sender).size() <= msg.seq_nr){//have not seen this messages seq_nr yet
-        (threadListItem->ack->at(msg.sender)).resize((int)msg.seq_nr+1,std::vector<char>(threadListItem->n, 0));
+        (threadListItem->ack->at(msg.sender)).resize((int)msg.seq_nr+1,std::vector<msg_s*>(threadListItem->n, NULL));
       }
 
-      if((threadListItem->ack->at(msg.sender))[msg.seq_nr][threadListItem->pid] == 0){//ack the message if we havent done so
-        threadListItem->ack->at(msg.sender)[msg.seq_nr][threadListItem->pid] = 1;
+      if((threadListItem->ack->at(msg.sender))[msg.seq_nr][threadListItem->pid] == NULL){//ack the message if we havent done so
+        threadListItem->ack->at(msg.sender)[msg.seq_nr][threadListItem->pid] = &threadListItem->received->at(i);
         ack_msg->seq_nr = msg.seq_nr;
         ack_msg->sender = msg.sender;
         threadListItem->link->broadcast(ack_msg);
@@ -42,9 +45,9 @@ void *thr_acker(void * arg) {
         threadListItem->link->broadcast(ack_msg);
       }
 
-      if(msg.is_ack){
-        (threadListItem->ack->at(msg.sender))[msg.seq_nr][msg.ack_from] = 1;
-        /*this would be a nice way to reduce overhead, but sadly does not work
+      if(msg.is_ack){//record incoming acks
+        (threadListItem->ack->at(msg.sender))[msg.seq_nr][msg.ack_from] = &threadListItem->received->at(i);
+        /*this would be a nice way to reduce resending of messages, but sadly does not work
         and i do not want to spend more time on figuring it out
 
         // if(msg.sender == threadListItem->pid){
@@ -59,7 +62,7 @@ void *thr_acker(void * arg) {
         */
       }
       pthread_mutex_unlock(threadListItem->ack_lock);
-
+      i++;
     }else{
       //wait a bit to avoid an empty loop
   		sleep_time.tv_sec = 0;
@@ -72,14 +75,14 @@ void *thr_acker(void * arg) {
 
 }
 
-reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports, int message_n): n(n),  pid(pid), forward(n), ack(n){
+reliableBroadcast::reliableBroadcast(int n, int pid, std::vector<int> ports, int message_n): n(n),  pid(pid), ack(n){
   seq_nr = 0;
   using namespace std::placeholders;
   link = new PerfectLink(pid, ports, std::bind(&reliableBroadcast::pp2pCallback, this, _1));
   link->startReceiving();
   pthread_mutex_init(&(this->received_lock),NULL);
   pthread_mutex_init(&(this->ack_lock),NULL);
-  ack = std::vector<std::vector<std::vector<char>>>(n, std::vector<std::vector<char>>(1, std::vector<char>(n,0)));
+  ack = std::vector<std::vector<std::vector<msg_s*>>>(n, std::vector<std::vector<msg_s*>>(1, std::vector<msg_s*>(n,0)));
 
   this->threadListItem.link = this->link;
   this->threadListItem.ack = &(this->ack);
@@ -118,11 +121,11 @@ bool reliableBroadcast::canDeliver(int pi_sender, int m){
     }
     if (num_acks > n/2) {
       pthread_mutex_unlock(&(this->ack_lock));
-     return true;
+     return this->ack[pi_sender][m][pi_sender];//should be safe since this location is never written again, and we are only reading
    }
   }
   pthread_mutex_unlock(&(this->ack_lock));
-	return false;
+	return NULL;
 }
 
 void reliableBroadcast::urbPrint(){

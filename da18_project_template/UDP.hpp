@@ -8,6 +8,7 @@ typedef void (*UDPMessageCallback)(struct msg_s* msg);//const char *ip, char *da
 //int piders;
 typedef struct{
   int port;
+  int n;
   std::function<void(msg_s*)> callback;
 } UDPThreadList;
 
@@ -16,7 +17,7 @@ struct msg_s{
   uint16_t sender;
   uint16_t is_ack;
   uint16_t ack_from;
-  //string msg;
+  int* VC;
 };
 
 class UDP{
@@ -30,6 +31,7 @@ public:
 private:
   std::mutex broadcast_mutex;
   int soc;
+  int n;
   //void *thr_listener(void* arg);
   UDPThreadList threadListItem;
   //const char* ipaddr;

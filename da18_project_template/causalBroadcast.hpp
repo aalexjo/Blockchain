@@ -1,32 +1,36 @@
-#include "reliableBroadcast.hpp"
-#include <cstdio>
-#include <string>
+#include "FIFObroadcast.hpp"
+#include <vector>
+
 typedef struct{
   reliableBroadcast *URB;
   int n;
   std::vector<int>* delivered;
-  FILE * fout;
   std::vector<std::string>* output;
   pthread_mutex_t* output_lock;
-}FIFOThreadList;
+}CAThreadList;
 
-class FIFObroadcast{
+
+class causalBroadcast{
 public:
-  FIFObroadcast(int n, int pid, std::vector<int> ports, int message_n);
+  causalBroadcast(int n, int pid, std::vector<int> ports, int message_n, std::vector<int> dependencies);
 
   void broadcast(struct msg_s* msg);
   void startReceiving();
   void stopReceiving();
   void printOutput();
+
 private:
   reliableBroadcast *URB;
-  FIFOThreadList threadListItem;
+  std::vector<int> dependencies;
   int n;
   int pid;
   int message_n;
-  std::vector<int> delivered;
+  int** VC;
+  std::vector<msg_s> pending;
+  pthread_t reveiver;
+
   FILE * fout;
-  pthread_t receiver;
   std::vector<std::string> output;
   pthread_mutex_t output_lock;
+
 };
