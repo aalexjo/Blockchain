@@ -30,7 +30,7 @@ void *thr_acker(void * arg) {
       pthread_mutex_unlock(threadListItem->received_lock);
 
       pthread_mutex_lock(threadListItem->ack_lock);
-      if(threadListItem->ack->at(msg.sender).size() <= msg.seq_nr){//have not seen this messages seq_nr yet
+      if(threadListItem->ack->at(msg.sender).size() <= (unsigned long)msg.seq_nr){//have not seen this messages seq_nr yet
         (threadListItem->ack->at(msg.sender)).resize((int)msg.seq_nr+1,std::vector<msg_s*>(threadListItem->n, NULL));
       }
 
@@ -112,7 +112,7 @@ void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
   pthread_mutex_unlock(&(this->received_lock));
 }
 
-bool reliableBroadcast::canDeliver(int pi_sender, int m){
+msg_s* reliableBroadcast::canDeliver(int pi_sender, int m){
   pthread_mutex_lock(&(this->ack_lock));
   if(this->ack[pi_sender].size() > (unsigned int)m){
     int num_acks = 0;

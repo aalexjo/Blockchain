@@ -32,8 +32,8 @@ void error(char const *e){
   exit(1);
 }
 
-UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports), n(n){
-  threadListItem = {ports[pid], ports.size(), callback};
+UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback): ports(ports){
+  threadListItem = {ports[pid], (int)ports.size(), callback};
   broadcast_count = 0;
   this->pid = pid;
   this->n = ports.size();
@@ -58,7 +58,7 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
     for( auto it = this->ports.begin(); it != this->ports.end(); it++){
       si_other.sin_port = htons(*it);//threadListItem.port);
       if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
-      int e = sendto(s, (void*) msg, sizeof(uint16_t)*4 + sizeof(int)*n, 0, (struct sockaddr *) &si_other, slen);//sending data
+      int e = sendto(s, (void*) msg, sizeof(msg_s), 0, (struct sockaddr *) &si_other, slen);//sending data
       if(e==-1)  error("udp_broadcast: sendto()");
     }
   }
@@ -98,7 +98,7 @@ void *thr_listener(void * arg){
   msg = new msg_s;
   while(1){
 
-    res = recvfrom(s, (void*)msg, sizeof(uint16_t)*4 + sizeof(int)*(threadListItem->n)/*sizeof(msg_s)*/, 0,(struct sockaddr *) &si_other, &slen);
+    res = recvfrom(s, (void*)msg, sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
     //printf("Recevied: msg-> sender %d\n", msg->sender);
      ((threadListItem->callback))(msg);

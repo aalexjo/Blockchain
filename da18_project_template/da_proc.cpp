@@ -19,13 +19,6 @@ static void start(int signum) {
 	wait_for_start = 0;
 }
 
-void UDPTestCallback(struct msg_s* msg){//const char * ip, char * data, int datalength){
-
-  // Assuming an ascii string here - a binary blob (including '0's) will
-  // be ugly/truncated.
-  printf("Received UDP message from %d with seq number '%d'\n",msg->sender, msg->seq_nr);
-
-}
 
 static void stop(int signum) {
 	//reset signal handlers to default
@@ -42,14 +35,6 @@ static void stop(int signum) {
 
 	//exit directly from signal handler
 	exit(0);
-}
-
-void perfectLinkTestCallback(struct msg_s* msg) {
-	// Assuming an ascii string here - a binary blob (including '0's) will
-  // be ugly/truncated.
-	// printf("Received perfectLink message from %s: '%s'\n", ip, data);
-	printf("Perfect link recived from %d with seq_nr: %d  \n" , msg->sender, msg->seq_nr);
-	// return std::make_tuple()
 }
 
 int main(int argc, char** argv) {

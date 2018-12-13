@@ -13,11 +13,11 @@ typedef struct{
 } UDPThreadList;
 
 struct msg_s{
-  uint16_t seq_nr;
-  uint16_t sender;
-  uint16_t is_ack;
-  uint16_t ack_from;
-  int* VC;
+  long seq_nr;
+  long sender;
+  long is_ack;
+  long ack_from;
+  //int* VC;
 };
 
 class UDP{
