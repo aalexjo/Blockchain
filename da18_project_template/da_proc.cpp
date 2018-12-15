@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <sstream>
 #include <stdlib.h>
 #include <signal.h>
 #include <time.h>
 #include <cassert>
 #include <fstream>
+#include <iostream>
 #include "reliableBroadcast.hpp"
 #include "perfectLink.hpp"
 #include "FIFObroadcast.hpp"
@@ -64,16 +66,34 @@ int main(int argc, char** argv) {
   vector <int> ports;
   membership.open(file_name, ios::in);
   membership >> process_n;
-	vector<bool> dependencies(process_n,true);//TODO: probably better to init as false
+	vector<bool> dependencies(process_n, false);//TODO: probably better to init as false
 
-  while(membership >> id >> ip >> port) {
+  // Get ports
+  for(int i = 0; i < process_n; i++) {
+    membership >> id >> ip >> port;
     ids.push_back(id);
     ips.push_back(ip);
     ports.push_back(port);
+    //process_s process = { id, ip, port };
+    //processes.push_back(process);
+  }
+  membership.ignore();
+
+  // Get dependencies
+  string line;
+  for(int i = 0; i < process_n; i++) {
+    getline(membership, line); // Get line till matches current pid
+    if(i == pid) {
+      cout << "myline:" << line << '\n';
+      stringstream pidLine(line);
+      pidLine.ignore();
+      int dep;
+      while(pidLine >> dep) {
+        dependencies[dep-1] = true;
+      }
+    }
   }
 	membership.close();
-
-	//TODO: get dependencies
 
 	//initialize application
 
