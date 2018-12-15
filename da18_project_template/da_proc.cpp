@@ -7,9 +7,11 @@
 #include "reliableBroadcast.hpp"
 #include "perfectLink.hpp"
 #include "FIFObroadcast.hpp"
+#include "causalBroadcast.hpp"
 using namespace std;
 
 FIFObroadcast* fifo;
+causalBroadcast* CB;
 
 static int wait_for_start = 1;
 //static int pNumber, msgNum;
@@ -31,7 +33,7 @@ static void stop(int signum) {
 	//write/flush output file if necessary
 	printf("Writing output.\n");
 
-	fifo->printOutput();
+	CB->printOutput();
 
 	//exit directly from signal handler
 	exit(0);
@@ -62,12 +64,16 @@ int main(int argc, char** argv) {
   vector <int> ports;
   membership.open(file_name, ios::in);
   membership >> process_n;
+	vector<bool> dependencies(process_n,true);//TODO: probably better to init as false
+
   while(membership >> id >> ip >> port) {
     ids.push_back(id);
     ips.push_back(ip);
     ports.push_back(port);
   }
 	membership.close();
+
+	//TODO: get dependencies
 
 	//initialize application
 
@@ -77,7 +83,9 @@ int main(int argc, char** argv) {
 	//PerfectLink perfectLink(pid, ports, perfectLinkTestCallback);
 	//perfectLink.startReceiving();
 	fifo = new FIFObroadcast(process_n, pid-1, ports, message_n);
-	fifo->startReceiving();
+
+	CB = new causalBroadcast(process_n, pid-1, ports, message_n, dependencies);
+	CB->startReceiving();
 
 
 	//wait until start signal
@@ -88,7 +96,7 @@ int main(int argc, char** argv) {
 		nanosleep(&sleep_time, NULL);
 	}
 
-	struct msg_s msg;
+	struct msg_s msg = {0, pid-1, 0, 0, new int[process_n]()};
 	//bzero(&msg, sizeof(msg));
 	msg.seq_nr = 0;
 	msg.sender = pid-1;
@@ -101,8 +109,8 @@ int main(int argc, char** argv) {
 	//wait until stopped
 	while(msg.seq_nr < message_n) {
 		msg.seq_nr = msg.seq_nr + 1;
-		fifo->broadcast(&msg);
+		CB->broadcast(&msg);
 	}
-	fifo->stopReceiving();
+	CB->stopReceiving();
 	printf("all done in p%d\n",pid);
 }

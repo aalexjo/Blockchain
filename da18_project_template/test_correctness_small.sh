@@ -24,7 +24,7 @@ echo "3
 3 127.0.0.1 11003" > membership
 
 # start 3 processes, each broadcasting 100 messages
-for i in `seq 1 3`
+for i in `seq 1 2`
 do
     ./da_proc $i membership 1000 &
     da_proc_id[$i]=$!
@@ -54,7 +54,7 @@ sleep $time_to_finish
 killall -TERM da_proc
 
 # wait until all processes stop
-for i in `seq 1 3`
+for i in `seq 1 2`
 do
     if [ -n "${da_proc_id[$i]}" ]; then
 	    wait "${da_proc_id[$i]}"

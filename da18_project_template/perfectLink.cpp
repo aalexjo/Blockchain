@@ -35,11 +35,14 @@ PerfectLink::PerfectLink(int pid, std::vector<int> ports, std::function<void(msg
   pthread_mutex_init(&broadcast_lock, NULL);
   pthread_mutex_init(&list_lock, NULL);
 
+  this->n = ports.size();
+
   perfectLinkThreadList *threadListItem = new perfectLinkThreadList;//this must by dynamically allocated as threads live a long time
   threadListItem->udp = this->udp;
   threadListItem->broadcast_list = &broadcast_list;
   threadListItem->broadcast_lock = &broadcast_lock;
   threadListItem->list_lock = &list_lock;
+  threadListItem->n = n;
   pthread_t broadcast;
   int e = pthread_create(&broadcast, NULL, thr_broadcaster, (threadListItem));
   if(e==-1) {
@@ -55,12 +58,12 @@ void PerfectLink::broadcast(struct msg_s* msg){
 
 
   if(msg->is_ack) return;
-
-  pthread_mutex_lock(&list_lock);
-
   msg_s *new_msg = new msg_s;
   memcpy(new_msg, msg, sizeof(msg_s));
+  new_msg->VC = new int[n]();
+  memcpy(new_msg->VC, msg->VC, sizeof(int)*n);
 
+  pthread_mutex_lock(&list_lock);
   broadcast_list.insert(broadcast_list.end(), std::pair<int, msg_s*>(msg->seq_nr, new_msg));
   pthread_mutex_unlock(&list_lock);
 

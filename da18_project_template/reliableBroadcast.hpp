@@ -6,7 +6,7 @@
 
 typedef struct{
   PerfectLink* link;
-  std::vector<msg_s> *received;
+  std::vector<msg_s*> *received;
   std::vector<std::vector<std::vector<msg_s*>>> *ack;
   int pid;
   int n;
@@ -32,7 +32,7 @@ private:
 	PerfectLink* link;
 	unsigned int seq_nr;
   URBThreadList threadListItem;
-  std::vector<msg_s> received;
+  std::vector<msg_s*> received;
 	std::vector<std::vector<msg_s>> delivered;
 
   std::vector<std::vector<std::vector<msg_s*>>> ack; //use char since bool sucks

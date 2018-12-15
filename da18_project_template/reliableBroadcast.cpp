@@ -22,7 +22,7 @@ void *thr_acker(void * arg) {
     if(i < threadListItem->received->size()){
       //printf("size of received %d\n", threadListItem->received->size());
       pthread_mutex_lock(threadListItem->received_lock);
-      msg_s msg = threadListItem->received->at(i);//badly need to remove this message from received
+      msg_s* msg = threadListItem->received->at(i);//badly need to remove this message from received
       // if(i == threadListItem->received->size()){// we have caught up with all messages, clear the buffer and reset counter
       //   threadListItem->received->clear();
       //   i = 0;
@@ -30,33 +30,38 @@ void *thr_acker(void * arg) {
       pthread_mutex_unlock(threadListItem->received_lock);
 
       pthread_mutex_lock(threadListItem->ack_lock);
-      if(threadListItem->ack->at(msg.sender).size() <= (unsigned long)msg.seq_nr){//have not seen this messages seq_nr yet
-        (threadListItem->ack->at(msg.sender)).resize((int)msg.seq_nr+1,std::vector<msg_s*>(threadListItem->n, NULL));
+      if(threadListItem->ack->at(msg->sender).size() <= (unsigned long)msg->seq_nr){//have not seen this messages seq_nr yet
+        (threadListItem->ack->at(msg->sender)).resize((int)msg->seq_nr+1,std::vector<msg_s*>(threadListItem->n, NULL));
       }
 
-      if((threadListItem->ack->at(msg.sender))[msg.seq_nr][threadListItem->pid] == NULL){//ack the message if we havent done so
-        threadListItem->ack->at(msg.sender)[msg.seq_nr][threadListItem->pid] = &threadListItem->received->at(i);
-        ack_msg->seq_nr = msg.seq_nr;
-        ack_msg->sender = msg.sender;
+      if((threadListItem->ack->at(msg->sender))[msg->seq_nr][threadListItem->pid] == NULL){//ack the message if we havent done so
+        threadListItem->ack->at(msg->sender)[msg->seq_nr][threadListItem->pid] = threadListItem->received->at(i);
+        ack_msg->seq_nr = msg->seq_nr;
+        ack_msg->sender = msg->sender;
+        ack_msg->VC     = msg->VC;
         threadListItem->link->broadcast(ack_msg);
-      }else if(!msg.is_ack){//re ack if this is a real message in case they are resending because a ack was lost
-        ack_msg->seq_nr = msg.seq_nr;
-        ack_msg->sender = msg.sender;
+      }else if(!msg->is_ack){//re ack if this is a real message in case they are resending because a ack was lost
+        if(threadListItem->ack->at(msg->sender)[msg->seq_nr][msg->sender] == NULL){
+          threadListItem->ack->at(msg->sender)[msg->seq_nr][msg->sender] = threadListItem->received->at(i);
+        }
+        ack_msg->seq_nr = msg->seq_nr;
+        ack_msg->sender = msg->sender;
+        ack_msg->VC     = msg->VC;
         threadListItem->link->broadcast(ack_msg);
       }
 
-      if(msg.is_ack){//record incoming acks
-        (threadListItem->ack->at(msg.sender))[msg.seq_nr][msg.ack_from] = &threadListItem->received->at(i);
+      if(msg->is_ack && msg->sender != msg->ack_from){//record incoming acks
+        (threadListItem->ack->at(msg->sender))[msg->seq_nr][msg->ack_from] = threadListItem->received->at(i);
         /*this would be a nice way to reduce resending of messages, but sadly does not work
         and i do not want to spend more time on figuring it out
 
-        // if(msg.sender == threadListItem->pid){
+        // if(msg->sender == threadListItem->pid){
         //   unsigned int num_acks = 0;
-        //   for(unsigned int i = 0; i < threadListItem->ack->at(msg.sender)[msg.seq_nr].size(); i++){
-        //     if(threadListItem->ack->at(msg.sender)[msg.seq_nr][i]) num_acks++;
+        //   for(unsigned int i = 0; i < threadListItem->ack->at(msg->sender)[msg->seq_nr].size(); i++){
+        //     if(threadListItem->ack->at(msg->sender)[msg->seq_nr][i]) num_acks++;
         //   }
-        //   if (num_acks > threadListItem->ack->at(msg.sender)[msg.seq_nr].size()/2) {
-        //     threadListItem->link->stopBroadcast(msg.seq_nr);
+        //   if (num_acks > threadListItem->ack->at(msg->sender)[msg->seq_nr].size()/2) {
+        //     threadListItem->link->stopBroadcast(msg->seq_nr);
         //   }
         // }
         */
@@ -66,7 +71,7 @@ void *thr_acker(void * arg) {
     }else{
       //wait a bit to avoid an empty loop
   		sleep_time.tv_sec = 0;
-  		sleep_time.tv_nsec = 100;
+  		sleep_time.tv_nsec = 1000;
   		nanosleep(&sleep_time, NULL);
     }
   }
@@ -106,10 +111,16 @@ void reliableBroadcast::broadcast(struct msg_s* msg){
 
 //essential that callback function is fast as this is called from UDPreceiver
 void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
-  msg_s new_message = {msg->seq_nr, msg->sender, msg->is_ack, msg->ack_from};
-  pthread_mutex_lock(&(this->received_lock));
-  received.push_back(new_message);
-  pthread_mutex_unlock(&(this->received_lock));
+  //printf("Recevied: msg-> sender %d\n", msg->seq_nr);
+
+  // msg_s* new_message = (msg_s*)malloc(sizeof(msg_s));// = {msg->seq_nr, msg->sender, msg->is_ack, msg->ack_from, new int[5]()};
+  // new_message->seq_nr = msg->seq_nr;
+  // new_message->sender = msg->sender;
+  // new_message->is_ack = msg->is_ack;
+  // new_message->ack_from = msg->ack_from;
+   pthread_mutex_lock(&(this->received_lock));
+   received.push_back(msg);
+   pthread_mutex_unlock(&(this->received_lock));
 }
 
 msg_s* reliableBroadcast::canDeliver(int pi_sender, int m){
@@ -117,10 +128,11 @@ msg_s* reliableBroadcast::canDeliver(int pi_sender, int m){
   if(this->ack[pi_sender].size() > (unsigned int)m){
     int num_acks = 0;
     for(unsigned int i = 0; i < this->ack[pi_sender][m].size(); i++){
-      if(this->ack[pi_sender][m][i]) num_acks++;
+      if(this->ack[pi_sender][m][i] != NULL) num_acks++;
     }
     if (num_acks > n/2) {
       pthread_mutex_unlock(&(this->ack_lock));
+      //TODO: this return is not good in the case where we have not actually received the real message, check if return != NULL
      return this->ack[pi_sender][m][pi_sender];//should be safe since this location is never written again, and we are only reading
    }
   }

@@ -19,7 +19,7 @@ typedef struct{
   std::map<int, msg_s*> *broadcast_list;
   pthread_mutex_t *broadcast_lock;
   pthread_mutex_t *list_lock;
-
+  int n;
 } perfectLinkThreadList;
 
 
@@ -34,6 +34,7 @@ public:
 private:
   static void UDPcallback(struct msg_s* msg);
   UDP* udp;
+  int n;
 
   std::map<int, msg_s*> broadcast_list;
   pthread_mutex_t broadcast_lock;

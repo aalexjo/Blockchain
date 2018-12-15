@@ -54,11 +54,18 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
   memset((char *) &si_other, 0, sizeof(si_other)); //clearing si_other
   si_other.sin_family = AF_INET;
   //printf("Sent: msg-> sender %d\n", msg->sender);
+  //printf("Send: msg-> VS[4] %d\n", msg->VC[4]);
+
+  uint8_t* buf = (uint8_t*)malloc(sizeof(int)*4 + sizeof(int)*this->n);
+  memcpy(buf, msg, sizeof(int)*4);
+  memcpy(buf + sizeof(int)*4, msg->VC, sizeof(int)*this->n);
+
+
   for(int i = 0; i < 1; i++){
     for( auto it = this->ports.begin(); it != this->ports.end(); it++){
       si_other.sin_port = htons(*it);//threadListItem.port);
       if (inet_aton("255.255.255.255", &si_other.sin_addr)==0) error("inet_aton() failed");//setting destination address
-      int e = sendto(s, (void*) msg, sizeof(msg_s), 0, (struct sockaddr *) &si_other, slen);//sending data
+      int e = sendto(s, (void*) buf, sizeof(int)*4 + sizeof(int)*this->n, 0, (struct sockaddr *) &si_other, slen);//sending data
       if(e==-1)  error("udp_broadcast: sendto()");
     }
   }
@@ -94,14 +101,24 @@ void *thr_listener(void * arg){
   if(res == -1) error("thr_udpListen:bind");
 
   msg_s* msg;
-  //bzero(&msg, 2* sizeof(*msg));
-  msg = new msg_s;
+  uint8_t* buf = (uint8_t*)malloc(sizeof(int)*4 + sizeof(int)*threadListItem->n);
+  //msg = new msg_s;
   while(1){
+    msg = (msg_s*)malloc(sizeof(int)*4 + sizeof(int*));
 
-    res = recvfrom(s, (void*)msg, sizeof(msg_s), 0,(struct sockaddr *) &si_other, &slen);
+    // msg_s* msg;
+    // msg = new msg_s;
+    res = recvfrom(s, (void*)buf, (sizeof(int)*4 + sizeof(int)*threadListItem->n), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
-    //printf("Recevied: msg-> sender %d\n", msg->sender);
+
+    memcpy(msg, buf, sizeof(int)*4);
+    msg->VC = (int*)malloc(sizeof(int)*threadListItem->n);
+    memcpy(msg->VC, buf + sizeof(int)*4, sizeof(int)*threadListItem->n);
+
+    //printf("Recevied: msg-> VS[4] %d\n", msg->VC[4]);
+    //printf("%d\n", *((int*)0x0) );
      ((threadListItem->callback))(msg);
+
      // if((msg->is_ack) && msg->sender == 2){
      //   switch (msg->ack_from) {
      //     case 0:

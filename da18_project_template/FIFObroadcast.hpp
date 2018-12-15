@@ -1,3 +1,5 @@
+#pragma once
+
 #include "reliableBroadcast.hpp"
 #include <cstdio>
 #include <string>
