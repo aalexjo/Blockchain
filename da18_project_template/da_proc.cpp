@@ -84,7 +84,6 @@ int main(int argc, char** argv) {
   for(int i = 0; i < process_n; i++) {
     getline(membership, line); // Get line till matches current pid
     if(i == pid) {
-      cout << "myline:" << line << '\n';
       stringstream pidLine(line);
       pidLine.ignore();
       int dep;
