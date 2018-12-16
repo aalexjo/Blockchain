@@ -47,6 +47,8 @@ public :
     msg_stack_s msg_stack = {msg, dst};
     msg_send_add_stack.push_back(&msg_stack);
     pthread_mutex_unlock(&msg_stack_add_lock);
+
+    deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
   }
 
   void pp2pStartSend(void) {

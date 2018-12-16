@@ -96,7 +96,7 @@ public :
           perror("cannot send message");
           exit(1);
         }
-      } else {
+      } if (!ack[msg.src][msg.creator][msg.seq_nbr]){
         ack[msg.src][msg.creator][msg.seq_nbr] = true;
       }
     }
