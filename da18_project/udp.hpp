@@ -32,18 +32,17 @@ struct process_s {
 };
 
 class UDP {
-private :
+protected:
   int pid;
   int processNbr;
   int messageNbr;
   vector <process_s> processes;
+private:
   function<void(msg_s*)> triggerCallbackUDP;
 
 public :
   UDP(int pid, int processNbr, int messageNbr, vector <process_s> processes, function<void(msg_s*)> callback) :
-    pid(pid), processNbr(processNbr), messageNbr(messageNbr), processes(processes), triggerCallbackUDP(callback) {
-
-  };
+    pid(pid), processNbr(processNbr), messageNbr(messageNbr), processes(processes), triggerCallbackUDP(callback) {};
 
   void send(msg_s msg, int dst, int sockfd) {
     sockaddr_in dest_addr;
