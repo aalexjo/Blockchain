@@ -17,11 +17,11 @@ void *thr_acker(void * arg) {
   while(true){
     if(i < threadListItem->received->size()){
       pthread_mutex_lock(threadListItem->received_lock);
-      msg_s* msg = threadListItem->received->at(i);//badly need to remove this message from received
-      // if(i == threadListItem->received->size()){// we have caught up with all messages, clear the buffer and reset counter
-      //   threadListItem->received->clear();
-      //   i = 0;
-      // }
+      msg_s* msg = threadListItem->received->at(i);
+      if(i == threadListItem->received->size()){// we have caught up with all messages, clear the buffer and reset counter
+        threadListItem->received->clear();
+        i = 0;
+      }
       pthread_mutex_unlock(threadListItem->received_lock);
 
       pthread_mutex_lock(threadListItem->ack_lock);
@@ -36,16 +36,18 @@ void *thr_acker(void * arg) {
         ack_msg->VC     = msg->VC;
         threadListItem->link->broadcast(ack_msg);
       }else if(!msg->is_ack){//re ack if this is a real message in case they are resending because a ack was lost
-        if(threadListItem->ack->at(msg->sender)[msg->seq_nr][msg->sender] == NULL){
-          threadListItem->ack->at(msg->sender)[msg->seq_nr][msg->sender] = threadListItem->received->at(i);
-        }
+
         ack_msg->seq_nr = msg->seq_nr;
         ack_msg->sender = msg->sender;
         ack_msg->VC     = msg->VC;
+        if(threadListItem->ack->at(msg->sender)[msg->seq_nr][msg->sender] == NULL){
+          threadListItem->ack->at(msg->sender)[msg->seq_nr][msg->sender] = threadListItem->received->at(i);
+        }else{
+          free(msg->VC);
+          free(msg);
+        }
         threadListItem->link->broadcast(ack_msg);
-      }
-
-      if(msg->is_ack && msg->sender != msg->ack_from){//record incoming acks
+      }else if(msg->is_ack && msg->sender != msg->ack_from){//record incoming acks
         (threadListItem->ack->at(msg->sender))[msg->seq_nr][msg->ack_from] = threadListItem->received->at(i);
         /*this would be a nice way to reduce resending of messages, but sadly does not work
         and i do not want to spend more time on figuring it out
@@ -60,6 +62,9 @@ void *thr_acker(void * arg) {
         //   }
         // }
         */
+      }else{
+        free(msg->VC);
+        free(msg);
       }
       pthread_mutex_unlock(threadListItem->ack_lock);
       i++;

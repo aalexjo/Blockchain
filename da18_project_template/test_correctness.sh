@@ -8,7 +8,7 @@
 
 # time to wait for correct processes to broadcast all messages (in seconds)
 # (should be adapted to the number of messages to send)
-time_to_finish=10
+time_to_finish=130
 
 init_time=2
 
@@ -34,7 +34,7 @@ echo "5
 # start 5 processes, each broadcasting 100 messages
 for i in `seq 1 5`
 do
-    ./da_proc $i membership 1000 &
+    ./da_proc $i membership 10000 &
     da_proc_id[$i]=$!
 done
 

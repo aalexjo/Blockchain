@@ -15,14 +15,16 @@ void *thr_broadcaster(void *arg) {
     sleep_time.tv_nsec = 900000000;//these values are modifiable
     nanosleep(&sleep_time, NULL);//give the receiver time to catch up
     pthread_mutex_lock(threadListItem->list_lock);
+    auto it = threadListItem->broadcast_list->rbegin();
+    auto it_end = threadListItem->broadcast_list->rend();
+    pthread_mutex_unlock(threadListItem->list_lock);
 
-    for(auto it = threadListItem->broadcast_list->rbegin();it != threadListItem->broadcast_list->rend(); it++){
+    for(;it != it_end; it++){
       pthread_mutex_lock(threadListItem->broadcast_lock);
       threadListItem->udp->broadcast(it->second);
       pthread_mutex_unlock(threadListItem->broadcast_lock);
     }
 
-    pthread_mutex_unlock(threadListItem->list_lock);
 
   }
   pthread_exit(0);
@@ -37,7 +39,7 @@ PerfectLink::PerfectLink(int pid, std::vector<int> ports, std::function<void(msg
 
   this->n = ports.size();
 
-  perfectLinkThreadList *threadListItem = new perfectLinkThreadList;//this must by dynamically allocated as threads live a long time
+  perfectLinkThreadList *threadListItem = new perfectLinkThreadList;
   threadListItem->udp = this->udp;
   threadListItem->broadcast_list = &broadcast_list;
   threadListItem->broadcast_lock = &broadcast_lock;
