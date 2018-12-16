@@ -21,19 +21,19 @@ struct msg_stack_s {
 class P2PP : public UDP {
 private:
   function<void(msg_s*)> triggerCallbackP2PP;
-  void pp2pReceive(msg_s* msg) {
-    if(!deliveredPL[msg->creator][msg->seq_nbr][msg->src]) {
-      printf("DL:P2PP:pid:%i:msg:[%i:m[%i,%i]]\n", UDP::pid, msg->creator, msg->src, msg->seq_nbr);
-      deliveredPL[msg->creator][msg->seq_nbr][msg->src] = true;
-      triggerCallbackP2PP(msg);
+  void pp2pReceive(msg_s msg) {
+    if(!deliveredPL[msg.creator][msg.seq_nbr][msg.src]) {
+      printf("DL:P2PP:pid:%i:msg:[%i:m[%i,%i]]\n", UDP::pid, msg.creator, msg.src, msg.seq_nbr);
+      deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
+      triggerCallbackP2PP(&msg);
     }
   }
 
 protected:
   vector< vector< vector<bool> > > deliveredPL;
   pthread_mutex_t msg_stack_add_lock;
-  list<msg_stack_s*> msg_send_stack;
-  list<msg_stack_s*> msg_send_add_stack;
+  list<msg_stack_s> msg_send_stack;
+  list<msg_stack_s> msg_send_add_stack;
 
 public :
   P2PP(int pid, int processNbr, int messageNbr, vector<process_s> processes, function<void(msg_s*)> callback) :
@@ -45,7 +45,7 @@ public :
   void send(msg_s msg, int dst) {
     pthread_mutex_lock(&msg_stack_add_lock);
     msg_stack_s msg_stack = {msg, dst};
-    msg_send_add_stack.push_back(&msg_stack);
+    msg_send_add_stack.push_back(msg_stack);
     pthread_mutex_unlock(&msg_stack_add_lock);
 
     deliveredPL[msg.creator][msg.seq_nbr][msg.src] = true;
@@ -60,10 +60,10 @@ public :
     }
     while(1) {
       // Send messages
-      std::list<msg_stack_s*>::iterator i = msg_send_stack.begin();
+      std::list<msg_stack_s>::iterator i = msg_send_stack.begin();
       while (i != msg_send_stack.end()) {
-        msg_s msg = (*i)->msg;
-        int dst = (*i)->dst;
+        msg_s msg = (*i).msg;
+        int dst = (*i).dst;
         if (ack[msg.src][msg.creator][msg.seq_nbr]) {
           msg_send_stack.erase(i++);
         } else {
