@@ -22,16 +22,15 @@ class P2PP : public UDP {
 private:
   function<void(msg_s*)> triggerCallbackP2PP;
   void pp2pReceive(msg_s* msg) {
-    printf("Received\n");
     if(!deliveredPL[msg->creator][msg->seq_nbr][msg->src]) {
       printf("DL:P2PP:pid:%i:msg:[%i:m[%i,%i]]\n", UDP::pid, msg->creator, msg->src, msg->seq_nbr);
       deliveredPL[msg->creator][msg->seq_nbr][msg->src] = true;
       triggerCallbackP2PP(msg);
     }
   }
+
 protected:
   vector< vector< vector<bool> > > deliveredPL;
-  pthread_mutex_t msg_stack_lock;
   pthread_mutex_t msg_stack_add_lock;
   list<msg_stack_s*> msg_send_stack;
   list<msg_stack_s*> msg_send_add_stack;
@@ -40,7 +39,7 @@ public :
   P2PP(int pid, int processNbr, int messageNbr, vector<process_s> processes, function<void(msg_s*)> callback) :
     UDP(pid, processNbr, messageNbr, processes, bind(&P2PP::pp2pReceive, this, placeholders::_1)), triggerCallbackP2PP(callback) {
     deliveredPL = vector<vector<vector<bool>>>(processNbr, vector<vector<bool>>(messageNbr, vector<bool>(processNbr, false)));
-    pthread_mutex_init(&msg_stack_lock, NULL);
+    pthread_mutex_init(&msg_stack_add_lock, NULL);
   };
 
   void send(msg_s msg, int dst) {

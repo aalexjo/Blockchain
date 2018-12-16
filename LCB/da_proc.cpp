@@ -101,6 +101,8 @@ int main(int argc, char** argv) {
 
 	//broadcast messages
 	printf("Broadcasting messages.\n");
+  for(int i = 0; i < messageNbr; i++) {
+  }
 
 	//wait until stopped
 	while(1) {

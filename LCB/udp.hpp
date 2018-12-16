@@ -86,11 +86,12 @@ public :
         perror("cannot receive message");
         exit(1);
       }
+
       if(!msg.is_ack) {
         printf("R:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.creator, msg.src, msg.seq_nbr);
         thread t(triggerCallbackUDP, &msg);
         t.detach();
-        msg.is_ack = true; 
+        msg.is_ack = true;
         if (sendto(sockfd, (void* ) &msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
           perror("cannot send message");
           exit(1);
