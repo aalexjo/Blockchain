@@ -90,13 +90,13 @@ public :
     }
     size_t* buf = (size_t*)malloc(msgSize);
     while(1) {
-      if (recvfrom(sockfd, (void *) &buf, msgSize, 0, (sockaddr*) &src_addr, (socklen_t *) &addrlen) == -1) {
+      if (recvfrom(sockfd, (void *) buf, msgSize, 0, (sockaddr*) &src_addr, (socklen_t *) &addrlen) == -1) {
         perror("cannot receive message");
         exit(1);
       }
-      msg.VC = (int*)malloc(VCSize);
+      msg.VC = (int*) malloc(VCSize);
       memcpy(&msg, buf, sizeof(msg_s));
-      memcpy(&msg.VC, buf + sizeof(msg_s), VCSize);
+      memcpy(msg.VC, buf + sizeof(msg_s), VCSize);
 
       if(!msg.is_ack) {
         printf("R:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.creator, msg.src, msg.seq_nbr);
@@ -106,11 +106,11 @@ public :
         msg.is_ack = true;
         memcpy(buf, &msg, sizeof(msg_s));
         memcpy(buf + sizeof(msg_s), msg.VC, VCSize);
-        if (sendto(sockfd, (void* ) &buf, msgSize, 0, (const sockaddr*) &src_addr, addrlen) == -1) {
+        if (sendto(sockfd, (void* ) buf, msgSize, 0, (const sockaddr*) &src_addr, addrlen) == -1) {
           perror("cannot send message");
           exit(1);
         }
-
+        printf("Sended Ack\n");
       } if (!ack[msg.src][msg.creator][msg.seq_nbr]){
         printf("ACK:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.src, msg.creator, msg.seq_nbr);
         ack[msg.src][msg.creator][msg.seq_nbr] = true;
