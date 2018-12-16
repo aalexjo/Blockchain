@@ -92,23 +92,28 @@ int main(int argc, char** argv) {
   thread startSend(&P2PP::pp2pStartSend, &p2pp);
 
 	//wait until start signal
-	while(wait_for_start) {
+	//while(wait_for_start) {
 		struct timespec sleep_time;
 		sleep_time.tv_sec = 2;
 		sleep_time.tv_nsec = 1000;
 		nanosleep(&sleep_time, NULL);
-	}
+    //}
 
 	//broadcast messages
 	printf("Broadcasting messages.\n");
-  for(int i = 0; i < messageNbr; i++) {
+  for(int m = 0; m < messageNbr; m++) {
+    for(int p = 0; p < processNbr; p++) {
+      int* VC = (int*) malloc(sizeof(int) * processNbr);
+      msg_s msg = {pid, pid, m, false, VC};
+      p2pp.send(msg, p);
+    }
   }
 
 	//wait until stopped
-	while(1) {
-		struct timespec sleep_time;
-		sleep_time.tv_sec = 1;
+	//while(1) {
+  //struct timespec sleep_time;
+		sleep_time.tv_sec = 10;
 		sleep_time.tv_nsec = 0;
 		nanosleep(&sleep_time, NULL);
-	}
+    //}
 }

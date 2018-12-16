@@ -79,7 +79,7 @@ public :
 
       // Wait for next iteration
       sleep_time.tv_sec = 0;
-      sleep_time.tv_nsec = 1000;
+      sleep_time.tv_nsec = 5000;
       nanosleep(&sleep_time, NULL);
     }
   }
