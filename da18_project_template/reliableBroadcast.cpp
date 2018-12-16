@@ -1,11 +1,7 @@
 #include "reliableBroadcast.hpp"
 #include <functional>
 
-//this function uses some inefficient datastructurs and initializez stuff in runtime
-//it is therefore very slow and a large source of delay in the  project
-//if you feel like you have a few minutes on your hands optmize this
 
-//update, fixed a couple of things, but it is still kind of slow
 void *thr_acker(void * arg) {
   struct timespec sleep_time;
   sleep_time.tv_sec = 0;
@@ -20,7 +16,6 @@ void *thr_acker(void * arg) {
   unsigned int i = 0;
   while(true){
     if(i < threadListItem->received->size()){
-      //printf("size of received %d\n", threadListItem->received->size());
       pthread_mutex_lock(threadListItem->received_lock);
       msg_s* msg = threadListItem->received->at(i);//badly need to remove this message from received
       // if(i == threadListItem->received->size()){// we have caught up with all messages, clear the buffer and reset counter
@@ -111,13 +106,6 @@ void reliableBroadcast::broadcast(struct msg_s* msg){
 
 //essential that callback function is fast as this is called from UDPreceiver
 void reliableBroadcast::pp2pCallback(struct msg_s* msg) {
-  //printf("Recevied: msg-> sender %d\n", msg->seq_nr);
-
-  // msg_s* new_message = (msg_s*)malloc(sizeof(msg_s));// = {msg->seq_nr, msg->sender, msg->is_ack, msg->ack_from, new int[5]()};
-  // new_message->seq_nr = msg->seq_nr;
-  // new_message->sender = msg->sender;
-  // new_message->is_ack = msg->is_ack;
-  // new_message->ack_from = msg->ack_from;
    pthread_mutex_lock(&(this->received_lock));
    received.push_back(msg);
    pthread_mutex_unlock(&(this->received_lock));

@@ -1,7 +1,7 @@
 all: da_proc
 
 da_proc: da_proc.cpp UDP.cpp perfectLink.cpp reliableBroadcast.cpp FIFObroadcast.cpp causalBroadcast.cpp
-	g++ -Wall -g -o da_proc da_proc.cpp UDP.cpp perfectLink.cpp reliableBroadcast.cpp FIFObroadcast.cpp causalBroadcast.cpp -lpthread -pg
+	g++ -std=c++11 -Wall -g -o da_proc da_proc.cpp UDP.cpp perfectLink.cpp reliableBroadcast.cpp FIFObroadcast.cpp causalBroadcast.cpp -lpthread
 
 
 clean:

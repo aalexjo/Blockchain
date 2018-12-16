@@ -5,9 +5,6 @@
 causalBroadcast::causalBroadcast(int n, int pid, std::vector<int> ports, int message_n, std::vector<bool> dependencies):n(n), pid(pid), message_n(message_n), delivered(n, 1){
   this->dependencies = dependencies;
   VC =new int[n]();
-  // for(int i = 0; i<n; i++){
-  //   VC* = new int[n]();
-  // }
 
   URB = new reliableBroadcast(n, pid, ports, message_n);
   std::string fname = "da_proc_" + std::to_string(pid+1) + ".out";
@@ -29,16 +26,13 @@ causalBroadcast::causalBroadcast(int n, int pid, std::vector<int> ports, int mes
 void causalBroadcast::broadcast(struct msg_s* msg){
   pthread_mutex_lock(&(this->output_lock));
   output.push_back("b " +  std::to_string(msg->seq_nr));
-  //output.push_back("d " + std::to_string(pid+1)+ " " +  std::to_string(msg->seq_nr));
   pthread_mutex_unlock(&(this->output_lock));
 
-  //TODO: broadcast with VC
   pthread_mutex_lock(&(this->VC_lock));
   msg->VC=VC;
   URB->broadcast(msg);
   pthread_mutex_unlock(&(this->VC_lock));
 
-  //VC[pid]++;
 }
 
 void *thr_CBreceiver(void *arg) {
@@ -53,7 +47,7 @@ void *thr_CBreceiver(void *arg) {
         bool causalOrder = true;
         for(int i = 0; i < threadListItem->n; i++){
           if(!(threadListItem->VC[i] >= msg->VC[i]) && threadListItem->dependencies[i]){
-            if(threadListItem->pid == 0) printf("process %d is unable to deliver %d %d because our VC is %d and the message VC is %d for p%d\n", threadListItem->pid+1, p+1, m,threadListItem->VC[i], msg->VC[i], i+1);
+            //if(threadListItem->pid == 0) printf("process %d is unable to deliver %d %d because our VC is %d and the message VC is %d for p%d\n", threadListItem->pid+1, p+1, m,threadListItem->VC[i], msg->VC[i], i+1);
             causalOrder = false;
           }
         }
@@ -72,7 +66,7 @@ void *thr_CBreceiver(void *arg) {
     if(!delivering){
       struct timespec sleep_time;
       sleep_time.tv_sec = 0;
-      sleep_time.tv_nsec = 100000;//these values are modifiable
+      sleep_time.tv_nsec = 1000;//these values are modifiable
       nanosleep(&sleep_time, NULL);//no new messages to deliver, wait a bit before checking again
     }
   }

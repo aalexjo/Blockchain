@@ -12,12 +12,9 @@
 #include "causalBroadcast.hpp"
 using namespace std;
 
-FIFObroadcast* fifo;
 causalBroadcast* CB;
 
 static int wait_for_start = 1;
-//static int pNumber, msgNum;
-//char  membership;
 static void start(int signum) {
 	printf("Starting.\n");
 	wait_for_start = 0;
@@ -66,7 +63,7 @@ int main(int argc, char** argv) {
   vector <int> ports;
   membership.open(file_name, ios::in);
   membership >> process_n;
-	vector<bool> dependencies(process_n, false);//TODO: probably better to init as false
+	vector<bool> dependencies(process_n, false);
 
   // Get ports
   for(int i = 0; i < process_n; i++) {
@@ -74,8 +71,6 @@ int main(int argc, char** argv) {
     ids.push_back(id);
     ips.push_back(ip);
     ports.push_back(port);
-    //process_s process = { id, ip, port };
-    //processes.push_back(process);
   }
   membership.ignore();
 
@@ -96,13 +91,6 @@ int main(int argc, char** argv) {
 
 	//initialize application
 
-
-	//printf("port %d, pid: %d", ports[pid],pid);
-
-	//PerfectLink perfectLink(pid, ports, perfectLinkTestCallback);
-	//perfectLink.startReceiving();
-	fifo = new FIFObroadcast(process_n, pid-1, ports, message_n);
-
 	CB = new causalBroadcast(process_n, pid-1, ports, message_n, dependencies);
 	CB->startReceiving();
 
@@ -116,7 +104,6 @@ int main(int argc, char** argv) {
 	}
 
 	struct msg_s msg = {0, pid-1, 0, 0, new int[process_n]()};
-	//bzero(&msg, sizeof(msg));
 	msg.seq_nr = 0;
 	msg.sender = pid-1;
 	msg.is_ack = 0;

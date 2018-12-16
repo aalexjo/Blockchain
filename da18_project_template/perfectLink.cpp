@@ -86,11 +86,8 @@ void PerfectLink::startReceiving(){
 
 //currently not in use
 void PerfectLink::UDPcallback(struct msg_s* msg){
-  //owner->pp2pCallback(this->owner, msg);
-  printf("lolol\n" );
 }
 
 void PerfectLink::linkPrint(){
-  //printf()'
   this->udp->udpPrint();
 }

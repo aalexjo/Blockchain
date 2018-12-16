@@ -40,7 +40,7 @@ UDP::UDP(int pid, std::vector<int> ports, std::function<void(msg_s*)> callback):
 }
 
 //should be thread safe
-void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
+void UDP::broadcast(struct msg_s* msg){
 
   struct sockaddr_in si_other;
   int s, slen=sizeof(si_other);
@@ -53,8 +53,6 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
 
   memset((char *) &si_other, 0, sizeof(si_other)); //clearing si_other
   si_other.sin_family = AF_INET;
-  //printf("Sent: msg-> sender %d\n", msg->sender);
-  //printf("Send: msg-> VS[4] %d\n", msg->VC[4]);
 
   uint8_t* buf = (uint8_t*)malloc(sizeof(int)*4 + sizeof(int)*this->n);
   memcpy(buf, msg, sizeof(int)*4);
@@ -69,8 +67,7 @@ void UDP::broadcast(struct msg_s* msg){//char const * data, int dataLength){
       if(e==-1)  error("udp_broadcast: sendto()");
     }
   }
-  //must open new socket in order to achive thread safeness
-  close(s);//TODO: does closing the socket every time decrease performance? maybe open in an init function and save it in the class
+  close(s);
   if(!(msg->is_ack))broadcast_count++;
   struct timespec sleep_time;
   sleep_time.tv_sec = 0;
@@ -85,7 +82,6 @@ void *thr_listener(void * arg){
 
   struct sockaddr_in si_me, si_other;
   socklen_t slen = sizeof(si_other);
-  //char buf[BUFLEN];
 
   int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   assert(s != -1);
@@ -102,12 +98,9 @@ void *thr_listener(void * arg){
 
   msg_s* msg;
   uint8_t* buf = (uint8_t*)malloc(sizeof(int)*4 + sizeof(int)*threadListItem->n);
-  //msg = new msg_s;
   while(1){
     msg = (msg_s*)malloc(sizeof(int)*4 + sizeof(int*));
 
-    // msg_s* msg;
-    // msg = new msg_s;
     res = recvfrom(s, (void*)buf, (sizeof(int)*4 + sizeof(int)*threadListItem->n), 0,(struct sockaddr *) &si_other, &slen);
     if(res == -1) error("thr_udpListen:recvfrom");
 
@@ -115,26 +108,7 @@ void *thr_listener(void * arg){
     msg->VC = (int*)malloc(sizeof(int)*threadListItem->n);
     memcpy(msg->VC, buf + sizeof(int)*4, sizeof(int)*threadListItem->n);
 
-    //printf("Recevied: msg-> VS[4] %d\n", msg->VC[4]);
-    //printf("%d\n", *((int*)0x0) );
      ((threadListItem->callback))(msg);
-
-     // if((msg->is_ack) && msg->sender == 2){
-     //   switch (msg->ack_from) {
-     //     case 0:
-     //      rec_from_1++;
-     //      break;
-     //     case 2:
-     //      rec_from_3++;
-     //      break;
-     //    case 4:
-     //      rec_from_5++;
-     //      break;
-     //    default:
-     //      break;
-     //   }
-     // }
-     //if(msg->is_ack == true && msg->ack_from != piders) printf("we got someone elses ack!!!\n" );
   }
 
   // Never executed - this thread will be killed if it is not needed any more.

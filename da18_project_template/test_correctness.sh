@@ -8,9 +8,9 @@
 
 # time to wait for correct processes to broadcast all messages (in seconds)
 # (should be adapted to the number of messages to send)
-time_to_finish=15
+time_to_finish=10
 
-init_time=1
+init_time=2
 
 # configure lossy network simulation
 sudo tc qdisc add dev lo root netem 2>/dev/null
