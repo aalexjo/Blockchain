@@ -29,7 +29,7 @@ echo "3
 # start 3 processes, each broadcasting 100 messages
 for i in `seq 1 3`
 do
-    ./da_proc $i membership 20 &
+    ./da_proc $i membership 3 &
     da_proc_id[$i]=$!
 done
 

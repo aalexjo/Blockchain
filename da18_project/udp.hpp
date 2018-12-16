@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <cstring>
+#include <iostream>
+#include <stdlib.h>
+#include <unistd.h>
 // Socket
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -48,7 +51,8 @@ public :
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_addr.s_addr = inet_addr(processes[dst].ip.c_str());
     dest_addr.sin_port = htons(processes[dst].port);
-    if (sendto(sockfd, (void* ) &msg, sizeof(msg), 0, (const sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
+    printf("S:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.creator, msg.src, msg.seq_nbr);
+    if (sendto(sockfd, (void* ) &msg, sizeof(msg_s), 0, (const sockaddr*) &dest_addr, sizeof(dest_addr)) == -1) {
       perror("cannot send message");
       exit(1);
     }
@@ -78,10 +82,9 @@ public :
       if (recvfrom(sockfd, (void *) &msg, sizeof(msg_s), 0, (sockaddr*) &src_addr, (socklen_t *) &addrlen) == -1) {
         perror("cannot receive message");
         exit(1);
-      };
-      printf("Received message\n");
+      }
+      printf("R:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.creator, msg.src, msg.seq_nbr);
       triggerCallbackUDP(&msg);
     }
   }
 };
-

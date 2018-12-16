@@ -84,7 +84,6 @@ int main(int argc, char** argv) {
 
 	//initialize application
   P2PP p2pp(pid, processNbr, messageNbr, processes, nullptr);
-  exit(0)
   //client.display();
 
 	//start listening for incoming UDP packets
