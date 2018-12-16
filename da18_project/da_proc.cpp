@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
 	//start listening for incoming UDP packets
 	printf("Initializing.\n");
   thread receiveMsgs(&UDP::startReceiving, &p2pp);
+  thread startSend(&P2PP::pp2pStartSend, &p2pp);
 
 	//wait until start signal
 	while(wait_for_start) {
@@ -100,15 +101,6 @@ int main(int argc, char** argv) {
 
 	//broadcast messages
 	printf("Broadcasting messages.\n");
-  int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if(sockfd == -1){
-    perror("cannot open socket");
-    exit(1);
-  }
-  msg_s msg = { pid, pid, 0, nullptr, false };
-  for(int dst = 0; dst < processNbr; dst++) {
-    p2pp.send(msg, dst, sockfd);
-  }
 
 	//wait until stopped
 	while(1) {

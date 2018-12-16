@@ -13,17 +13,17 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <thread>
 
 using namespace std;
 
 struct msg_s {
-  int creator;
   int src;
+  int creator;
   int seq_nbr;
   int* VC;
   bool is_ack;
 };
-
 
 struct process_s {
   int id;
@@ -37,12 +37,16 @@ protected:
   int processNbr;
   int messageNbr;
   vector <process_s> processes;
+
+  vector< vector< vector<bool> > > ack;
 private:
   function<void(msg_s*)> triggerCallbackUDP;
 
 public :
   UDP(int pid, int processNbr, int messageNbr, vector <process_s> processes, function<void(msg_s*)> callback) :
-    pid(pid), processNbr(processNbr), messageNbr(messageNbr), processes(processes), triggerCallbackUDP(callback) {};
+    pid(pid), processNbr(processNbr), messageNbr(messageNbr), processes(processes), triggerCallbackUDP(callback) {
+    ack = vector<vector<vector<bool>>>(processNbr, vector<vector<bool>>(messageNbr, vector<bool>(processNbr, false)));
+  };
 
   void send(msg_s msg, int dst, int sockfd) {
     sockaddr_in dest_addr;
@@ -82,8 +86,18 @@ public :
         perror("cannot receive message");
         exit(1);
       }
-      printf("R:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.creator, msg.src, msg.seq_nbr);
-      triggerCallbackUDP(&msg);
+      if(!msg.is_ack) {
+        printf("R:pid:%i:msg:[%i:m[%i,%i]]\n", pid, msg.creator, msg.src, msg.seq_nbr);
+        thread t(triggerCallbackUDP, &msg);
+        t.detach();
+        msg.is_ack = true; 
+        if (sendto(sockfd, (void* ) &msg, sizeof(msg), 0, (const sockaddr*) &src_addr, addrlen) == -1) {
+          perror("cannot send message");
+          exit(1);
+        }
+      } else {
+        ack[msg.src][msg.creator][msg.seq_nbr] = true;
+      }
     }
   }
 };
